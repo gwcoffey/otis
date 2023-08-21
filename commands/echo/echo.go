@@ -1,23 +1,20 @@
+// Package echo provides a test command that simply echos back its arguments
 package echo
 
-import(
+import (
 	"flag"
 	"fmt"
-	"os"
+	"gwcoffey/otis/shared/cli"
 )
 
 func Echo(args []string) {
 	fs := flag.NewFlagSet("echo", flag.ExitOnError)
-	fs.Usage = func() {
-		fmt.Fprintf(os.Stderr, "Usage: %s echo <str>\n\n", os.Args[0])
-	}
-	fs.Parse(args)
+	fs.Usage = cli.UsageFn("echo <anything>...")
+	cli.MustParse(fs, args)
 
-	vals := make([]any, fs.NArg())
+	values := make([]any, fs.NArg())
 	for i, arg := range fs.Args() {
-		vals[i] = arg
+		values[i] = arg
 	}
-	fmt.Println(vals...)
+	fmt.Println(values...)
 }
-
-

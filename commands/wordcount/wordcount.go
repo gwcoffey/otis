@@ -3,9 +3,10 @@ package wordcount
 import (
 	"flag"
 	"fmt"
-    "golang.org/x/text/language"
-    "golang.org/x/text/message"
-	"io/ioutil"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
+	"golang.org/x/text/message"
+	"gwcoffey/otis/shared/cli"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -14,8 +15,8 @@ import (
 	"unicode/utf8"
 )
 
-const max_width = 40
-const indent_size = "  "
+const maxWidth = 40
+const indentSize = "  "
 
 type node struct {
 	Path     string
@@ -28,7 +29,7 @@ func wordCount(s string) int {
 }
 
 func readDir(path string) node {
-	entries, err := ioutil.ReadDir(path)
+	entries, err := os.ReadDir(path)
 	if err != nil {
 		panic(err)
 	}
@@ -45,7 +46,7 @@ func readDir(path string) node {
 			children = append(children, thisNode)
 		} else {
 			if strings.HasSuffix(entry.Name(), ".md") {
-				data, err := ioutil.ReadFile(subPath)
+				data, err := os.ReadFile(subPath)
 				if err != nil {
 					panic(err)
 				}
@@ -62,7 +63,7 @@ func readDir(path string) node {
 func prettify(str string) string {
 	clean := str
 	if filepath.Ext(str) == ".md" {
-		re := regexp.MustCompile(`^(\d+)\-(.*).md$`)
+		re := regexp.MustCompile(`^(\d+)-(.*).md$`)
 		matches := re.FindStringSubmatch(str)
 		if len(matches) == 3 {
 			num, err := strconv.Atoi(matches[1])
@@ -75,51 +76,52 @@ func prettify(str string) string {
 	}
 	words := strings.Split(clean, "-")
 	if len(words) > 0 {
-		words[0] = strings.Title(words[0])
+		words[0] = cases.Title(language.English).String(words[0])
 	}
 	return strings.Join(words, " ")
 }
 
 func truncate(str string) string {
 	result := str
-	if utf8.RuneCountInString(result) > max_width {
-		result = result[0:max_width-1] + "…"
+	if utf8.RuneCountInString(result) > maxWidth {
+		result = result[0:maxWidth-1] + "…"
 	}
-	
+
 	return result
 }
 
 func printDir(out *message.Printer, aNode *node, indent string) {
-	
+
 	name := truncate(indent + prettify(filepath.Base(aNode.Path)))
-	format := fmt.Sprintf("%%-%d.%ds : %%7d\n", max_width, max_width)
-	out.Printf(format, name, aNode.Words)
+	format := fmt.Sprintf("%%-%d.%ds : %%7d\n", maxWidth, maxWidth)
+	_, err := out.Printf(format, name, aNode.Words)
+	if err != nil {
+		panic(err)
+	}
 
 	for _, content := range aNode.Children {
-		printDir(out, &content, indent + indent_size)
+		printDir(out, &content, indent+indentSize)
 	}
 }
 
-func WordCount(args []string) {	
+func WordCount(args []string) {
 	fs := flag.NewFlagSet("wordcount", flag.ExitOnError)
-	fs.Usage = func() {
-		fmt.Fprintf(os.Stderr, "Usage: %s wordcount [path]\n\n", os.Args[0])
-	}
-	fs.Parse(args)
+	fs.Usage = cli.UsageFn("wordcount [path]")
+	cli.MustParse(fs, args)
 
 	// use the full manuscript by default...
 	rootPath := "manuscript/"
-	
+
 	// ...unless a path is specified
 	if fs.NArg() == 1 {
 		rootPath = fs.Arg(0)
 	}
-	
+
 	out := message.NewPrinter(language.English)
 
 	rootNode := readDir(rootPath)
 
-	out.Println()
+	_, _ = out.Println()
 	printDir(out, &rootNode, "")
-	out.Println()
+	_, _ = out.Println()
 }
