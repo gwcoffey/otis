@@ -1,63 +1,29 @@
 package main
 
 import (
-	"flag"
 	"fmt"
-	"os"
-
+	"github.com/alexflint/go-arg"
 	"gwcoffey/otis/commands/echo"
 	"gwcoffey/otis/commands/wordcount"
 )
 
-type Command struct {
-	Name   string
-	Alias  string
-	Action func([]string)
-}
-
-var commands []Command
-
-func setupFlags() {
-	flag.Bool("help", false, "show usage for a command")
-
-	flag.Usage = func() {
-		_, _ = fmt.Fprintf(os.Stderr, "Usage: %s <command>\n\n", os.Args[0])
-		fmt.Println("Commands:")
-		for _, cmd := range commands {
-			fmt.Printf("  %s (%s)\n", cmd.Name, cmd.Alias)
-		}
-		fmt.Println("\nFlags:")
-
-		flag.PrintDefaults()
-	}
-	flag.Parse()
-}
-
-func loadCommand(name string, alias string, action func([]string)) {
-	commands = append(commands, Command{Name: name, Alias: alias, Action: action})
-}
-
-func lookupCommand(name string) func([]string) {
-	for _, cmd := range commands {
-		if cmd.Name == name || (cmd.Alias != "" && cmd.Alias == name) {
-			return cmd.Action
-		}
-	}
-
-	return nil
+var args struct {
+	Echo      *echo.Args      `arg:"subcommand:echo"`
+	WordCount *wordcount.Args `arg:"subcommand:wordcount"`
 }
 
 func main() {
-	setupFlags()
+	p := arg.MustParse(&args)
+	if p.Subcommand() == nil {
+		p.Fail("missing subcommand")
+	}
 
-	loadCommand("echo", "e", echo.Echo)
-	loadCommand("wordcount", "wc", wordcount.WordCount)
-
-	commandFn := lookupCommand(flag.Arg(0))
-	if commandFn != nil {
-		commandFn(os.Args[2:])
-	} else {
-		flag.Usage()
-		os.Exit(1)
+	switch {
+	case args.Echo != nil:
+		echo.Echo(args.Echo)
+	case args.WordCount != nil:
+		wordcount.WordCount(args.WordCount)
+	default:
+		panic(fmt.Sprintf("unexpected and unhandled command"))
 	}
 }

@@ -2,18 +2,16 @@
 package echo
 
 import (
-	"flag"
 	"fmt"
-	"gwcoffey/otis/shared/cli"
 )
 
-func Echo(args []string) {
-	fs := flag.NewFlagSet("echo", flag.ExitOnError)
-	fs.Usage = cli.UsageFn("echo <anything>...")
-	cli.MustParse(fs, args)
+type Args struct {
+	Output []string `arg:"positional" help:"any string to echo back"`
+}
 
-	values := make([]any, fs.NArg())
-	for i, arg := range fs.Args() {
+func Echo(args *Args) {
+	values := make([]any, len(args.Output))
+	for i, arg := range args.Output {
 		values[i] = arg
 	}
 	fmt.Println(values...)

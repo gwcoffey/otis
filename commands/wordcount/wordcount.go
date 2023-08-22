@@ -1,20 +1,20 @@
 package wordcount
 
 import (
-	"errors"
-	"flag"
 	"fmt"
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
-	"gwcoffey/otis/shared/cli"
 	"gwcoffey/otis/shared/ms"
-	"os"
 	"strings"
 	"unicode/utf8"
 )
 
 const maxWidth = 40
 const indentSize = "  "
+
+type Args struct {
+	Path *string `arg:"positional" help:"count only the sub-path within manuscript"`
+}
 
 func sceneWordCount(scene ms.Scene) int {
 	text, err := scene.Text()
@@ -69,17 +69,6 @@ func printLine(label string, count int, emphasize bool) {
 	}
 }
 
-func readParams(fs *flag.FlagSet) (*string, error) {
-	if fs.NArg() == 0 {
-		return nil, nil
-	} else if fs.NArg() == 1 {
-		result := fs.Arg(0)
-		return &result, nil
-	} else {
-		return nil, errors.New("unexpected parameters")
-	}
-}
-
 func findMsRoot(path *string) ms.Dir {
 	root := ms.LoadMs()
 
@@ -97,17 +86,7 @@ func findMsRoot(path *string) ms.Dir {
 	return root
 }
 
-func WordCount(args []string) {
-	fs := flag.NewFlagSet("wordcount", flag.ExitOnError)
-	fs.Usage = cli.UsageFn("wordcount [path]")
-	cli.MustParse(fs, args)
-
-	path, err := readParams(fs)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-
-	root := findMsRoot(path)
+func WordCount(args *Args) {
+	root := findMsRoot(args.Path)
 	printDir(root, "")
 }
