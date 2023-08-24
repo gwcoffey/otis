@@ -65,6 +65,9 @@ type Dir interface {
 
 	// Scenes returns the scenes within this directory
 	Scenes() []Scene
+
+	// AllScenes returns all scenes within this directory (including subdirectories)
+	AllScenes() []Scene
 }
 
 type Scene interface {
@@ -174,6 +177,18 @@ func (n *node) Scenes() []Scene {
 	return result
 }
 
+func (n *node) AllScenes() []Scene {
+	var result []Scene
+	for _, child := range n.ChildNodes {
+		if child.Type == NodeTypeScene {
+			result = append(result, child)
+		} else if child.Type == NodeTypeDir {
+			result = append(result, child.AllScenes()...)
+		}
+	}
+	return result
+}
+
 func (n *node) SubDirs() []Dir {
 	var result []Dir
 	for _, child := range n.ChildNodes {
@@ -231,7 +246,7 @@ func (n *node) Number() int {
 
 // BEGIN public interface
 
-func LoadMs() Dir {
+func Load() Dir {
 	x := readDir("manuscript/")
 	return x
 }

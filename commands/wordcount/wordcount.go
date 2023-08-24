@@ -70,7 +70,7 @@ func printLine(label string, count int, emphasize bool) {
 }
 
 func findMsRoot(path *string) ms.Dir {
-	root := ms.LoadMs()
+	root := ms.Load()
 
 	// if a path is specified dig for it
 	if path != nil {

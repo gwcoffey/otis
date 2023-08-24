@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/alexflint/go-arg"
+	"gwcoffey/otis/commands/compile"
 	"gwcoffey/otis/commands/echo"
 	"gwcoffey/otis/commands/wordcount"
 )
@@ -10,6 +11,7 @@ import (
 var args struct {
 	Echo      *echo.Args      `arg:"subcommand:echo"`
 	WordCount *wordcount.Args `arg:"subcommand:wordcount"`
+	Compile   *compile.Args   `arg:"subcommand:compile"`
 }
 
 func main() {
@@ -23,6 +25,8 @@ func main() {
 		echo.Echo(args.Echo)
 	case args.WordCount != nil:
 		wordcount.WordCount(args.WordCount)
+	case args.Compile != nil:
+		compile.Compile(args.Compile)
 	default:
 		panic(fmt.Sprintf("unexpected and unhandled command"))
 	}

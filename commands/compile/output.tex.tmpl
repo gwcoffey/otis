@@ -1,0 +1,22 @@
+\documentclass[novel,nonsubmission]{sffms}
+\frenchspacing
+
+{{ command "author" .Config.Author.Name }}
+{{ with .Config.AuthorRealName -}}
+    {{- command "authorname" . -}}
+{{- end }}
+{{ with .Config.AuthorSurname -}}
+    {{- command "surname" . -}}
+{{- end }}
+{{ command "address" .Config.Address }}
+{{ command "title" .Config.FullTitle }}
+{{ with .Config.RunningTitle -}}
+    {{ command "runningtitle" . }}
+{{- end }}
+\wordcount{60,000}
+\begin{document}
+{{ range .Manuscript.AllScenes }}
+{{ markdown .Text }}
+\newscene
+{{ end }}
+\end{document}
