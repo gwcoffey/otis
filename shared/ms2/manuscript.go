@@ -1,20 +1,31 @@
 package ms2
 
+import "fmt"
+
+type manuscript struct {
+	node *node
+}
+
 type Manuscript interface {
-	FileSystemObject
+	fmt.Stringer
 	Works() []Work
 }
 
-func (n *node) Works() (work []Work) {
+func (m *manuscript) String() string {
+	// path in practice will just be "manuscript/" but in tests it is more useful
+	return fmt.Sprintf("Manuscript{%s}", m.node.path)
+}
+
+func (m *manuscript) Works() (works []Work) {
 	// if the root is a work, add it
-	if n.workCfg != nil {
-		work = append(work, n)
+	if m.node.workMeta != nil {
+		works = append(works, &work{node: m.node, manuscript: m})
 	}
 
 	// if the first-level children are works, add them
-	for _, child := range n.children {
-		if child.workCfg != nil {
-			work = append(work, child)
+	for _, child := range m.node.children {
+		if child.workMeta != nil {
+			works = append(works, &work{node: child, manuscript: m})
 		}
 	}
 

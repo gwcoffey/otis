@@ -1,47 +1,67 @@
 package ms2
 
+type work struct {
+	*node
+	*manuscript
+}
+
 type Work interface {
+	Scener
+	Folderer
+	AllScenes() []Scene
 	Title() string
 	RunningTitle() string
 	Author() string
 	AuthorSurname() string
 	Chapters() []Chapter
-	Scenes() []Scene
-	Folders() []Folder
 }
 
-func (n *node) Title() string {
-	return n.workCfg.Title
+func (w *work) AllScenes() (scenes []Scene) {
+	w.node.walk(func(node *node) {
+		if !node.isDir {
+			scenes = append(scenes, &scene{node: node, work: w})
+		}
+	})
+
+	return
 }
 
-func (n *node) RunningTitle() string {
-	return n.workCfg.RunningTitle
+func (w *work) Title() string {
+	return w.node.workMeta.Title
 }
 
-func (n *node) Author() string {
-	return n.workCfg.Author
+func (w *work) RunningTitle() string {
+	return w.node.workMeta.RunningTitle
 }
 
-func (n *node) AuthorSurname() string {
-	return n.workCfg.AuthorSurname
+func (w *work) Author() string {
+	return w.node.workMeta.Author
 }
 
-func (n *node) Scenes() []Scene {
-	var result []Scene
-	for _, child := range n.children {
-		if child.sceneCfg != nil {
-			result = append(result, child)
+func (w *work) AuthorSurname() string {
+	return w.node.workMeta.AuthorSurname
+}
+
+func (w *work) Scenes() (scenes []Scene) {
+	for _, child := range w.node.children {
+		if !child.isDir {
+			scenes = append(scenes, &scene{node: child, work: w})
 		}
 	}
-	return result
+	return
 }
 
-func (n *node) Chapters() []Chapter {
-	var result []Chapter
-	return result
+func (w *work) Chapters() (chapters []Chapter) {
+
+	w.node.walk(func(node *node) {
+		if node.chapterMeta != nil {
+			chapters = append(chapters, &chapter{node: node, work: w})
+		}
+	})
+
+	return
 }
 
-func (n *node) Folders() []Folder {
-	var result []Folder
-	return result
+func (w *work) Folders() []Folder {
+	return w.node.folders()
 }

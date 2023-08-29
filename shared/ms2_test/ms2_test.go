@@ -1,141 +1,191 @@
-package ms2_test
+package ms2
 
 import (
 	"gwcoffey/otis/shared/ms2"
-	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 )
 
 func TestLoadErrors(t *testing.T) {
-	withExemplar("no-manuscript", func() {
-		_, err := ms2.Load()
-		if err == nil {
-			t.Error("Load() error = nil; expected non-nil")
-		}
-	})
+	_, err := ms2.Load("../../test-data/manuscripts/does-not-exist")
+	if err == nil {
+		t.Error("Load(...) error = nil; expected non-nil")
+	}
 
-	withExemplar("flat", func() {
-		_, err := ms2.Load()
-		if err != nil {
-			t.Errorf("Load() error = '%v'; expected nil", err)
-		}
-	})
+	_, err = ms2.Load("../../test-data/manuscripts/flat")
+	if err != nil {
+		t.Errorf("Load(...) error = '%v'; expected nil", err)
+	}
 }
 
 func TestMustLoadErrors(t *testing.T) {
-	withExemplar("no-manuscript", func() {
-		defer func() {
-			err := recover()
-			if err == nil {
-				t.Error("Load() error = nil; expected non-nil")
-			}
-		}()
-		ms2.MustLoad()
-	})
+	defer func() {
+		err := recover()
+		if err == nil {
+			t.Error("MustLoad(...) error = nil; expected non-nil")
+		}
+	}()
+	ms2.MustLoad("../../test-data/manuscripts/does-not-exist")
 
-	withExemplar("flat", func() {
-		defer func() {
-			err := recover()
-			if err != nil {
-				t.Errorf("Load() error = '%v'; expected nil", err)
-			}
-		}()
-		ms2.MustLoad()
-	})
+	defer func() {
+		err := recover()
+		if err != nil {
+			t.Errorf("MustLoad(...) error = '%v'; expected nil", err)
+		}
+	}()
+	ms2.MustLoad("../../test-data/manuscripts/flat")
 }
 
 func TestMustLoadFlat(t *testing.T) {
-	withExemplar("flat", func() {
-		manuscript := ms2.MustLoad()
-		assertWorkCount(t, manuscript, 1)
-		assertWorkMetadata(t, manuscript.Works()[0], "Flat Example", "Flat", "Geoff Coffey", "Coffey")
-		assertWorkSceneCount(t, manuscript.Works()[0], 2)
-		assertSceneMetadata(t, manuscript.Works()[0].Scenes()[0], 0)
-		assertSceneMetadata(t, manuscript.Works()[0].Scenes()[1], 1)
-		assertSceneTextStartsWithLorem(t, manuscript.Works()[0].Scenes()[0])
-		assertSceneTextStartsWithLorem(t, manuscript.Works()[0].Scenes()[1])
-		assertChapterCount(t, manuscript.Works()[0], 0)
-		assertFolderCount(t, manuscript.Works()[0], 0)
-	})
+	manuscript := ms2.MustLoad("../../test-data/manuscripts/flat")
+	assertWorkCount(t, manuscript, 1)
+	assertWorkMetadata(t, manuscript.Works()[0], "Flat Example", "Flat", "Geoff Coffey", "Coffey")
+	assertSceneCount(t, manuscript.Works()[0], 2)
+	assertSceneMetadata(t, manuscript.Works()[0].Scenes()[0], 0, "Scene")
+	assertSceneMetadata(t, manuscript.Works()[0].Scenes()[1], 1, "Scene")
+	assertSceneTextStartsWithLorem(t, manuscript.Works()[0].Scenes()[0])
+	assertSceneTextStartsWithLorem(t, manuscript.Works()[0].Scenes()[1])
+	assertChapterCount(t, manuscript.Works()[0], 0)
+	assertFolderCount(t, manuscript.Works()[0], 0)
 }
 
-func assertWorkCount(t *testing.T, manuscript ms2.Manuscript, expected int) {
-	if actual := len(manuscript.Works()); expected != actual {
-		t.Fatalf("count of works = %d; expected %d", actual, expected)
-	}
+func TestMustLoadChapters(t *testing.T) {
+	manuscript := ms2.MustLoad("../../test-data/manuscripts/chapters")
+	assertWorkCount(t, manuscript, 1)
+	assertWorkMetadata(t, manuscript.Works()[0], "Chapters Example", "Chapters", "Geoff Coffey", "Coffey")
+	assertSceneCount(t, manuscript.Works()[0], 0)
+	assertChapterCount(t, manuscript.Works()[0], 2)
+	assertChapterMetadata(t, manuscript.Works()[0].Chapters()[0], "My Epilogue", false)
+	assertChapterMetadata(t, manuscript.Works()[0].Chapters()[1], "My Chapter", true)
+	assertSceneCount(t, manuscript.Works()[0].Chapters()[0], 1)
+	assertSceneMetadata(t, manuscript.Works()[0].Chapters()[0].Scenes()[0], 0, "Scene")
+	assertSceneTextStartsWithLorem(t, manuscript.Works()[0].Chapters()[0].Scenes()[0])
+	assertSceneCount(t, manuscript.Works()[0].Chapters()[1], 1)
+	assertSceneMetadata(t, manuscript.Works()[0].Chapters()[1].Scenes()[0], 0, "Scene")
+	assertSceneTextStartsWithLorem(t, manuscript.Works()[0].Chapters()[1].Scenes()[0])
+	assertFolderCount(t, manuscript.Works()[0], 2)
+	assertFolderMetadata(t, manuscript.Works()[0].Folders()[0], 0, "Epi")
+	assertSceneCount(t, manuscript.Works()[0].Folders()[0], 1)
+	assertFolderMetadata(t, manuscript.Works()[0].Folders()[1], 1, "Ch")
+	assertSceneCount(t, manuscript.Works()[0].Folders()[1], 1)
 }
 
-func assertWorkMetadata(t *testing.T, work ms2.Work, title string, runningTitle string, author string, surname string) {
-	if expected, actual := title, work.Title(); expected != actual {
-		t.Errorf("it.Works()[0].Title() = '%v'; expected '%v''", work.Title(), expected)
-	}
-	if expected, actual := runningTitle, work.RunningTitle(); expected != actual {
-		t.Errorf("it.Works()[0].RunningTitle() = '%v'; expected '%v''", actual, expected)
-	}
-	if expected, actual := author, work.Author(); expected != actual {
-		t.Errorf("it.Works()[0].Author() = '%v'; expected '%v''", actual, expected)
-	}
-	if expected, actual := surname, work.AuthorSurname(); expected != actual {
-		t.Errorf("it.Works()[0].AuthorSurname() = '%v'; expected '%v''", actual, expected)
-	}
+func TestMustLoadMultiWork(t *testing.T) {
+	manuscript := ms2.MustLoad("../../test-data/manuscripts/multi-work")
+
+	assertWorkCount(t, manuscript, 2)
+
+	assertWorkMetadata(t, manuscript.Works()[0], "Multi Work Book 1 Example", "Multi 1", "Geoff Coffey", "Coffey")
+	assertSceneCount(t, manuscript.Works()[0], 2)
+	assertSceneMetadata(t, manuscript.Works()[0].Scenes()[0], 0, "Scene")
+	assertSceneMetadata(t, manuscript.Works()[0].Scenes()[1], 1, "Scene")
+	assertSceneTextStartsWithLorem(t, manuscript.Works()[0].Scenes()[0])
+	assertSceneTextStartsWithLorem(t, manuscript.Works()[0].Scenes()[1])
+
+	assertWorkMetadata(t, manuscript.Works()[1], "Multi Work Book 2 Example", "Multi 2", "Geoff Coffey", "Coffey")
+	assertSceneCount(t, manuscript.Works()[1], 2)
+	assertSceneMetadata(t, manuscript.Works()[1].Scenes()[0], 0, "Scene")
+	assertSceneMetadata(t, manuscript.Works()[1].Scenes()[1], 1, "Scene")
+	assertSceneTextStartsWithLorem(t, manuscript.Works()[1].Scenes()[0])
+	assertSceneTextStartsWithLorem(t, manuscript.Works()[1].Scenes()[1])
+
+	assertChapterCount(t, manuscript.Works()[0], 0)
+
+	assertFolderCount(t, manuscript.Works()[0], 0)
 }
 
-func assertWorkSceneCount(t *testing.T, work ms2.Work, expected int) {
-	if actual := len(work.Scenes()); expected != actual {
-		t.Fatalf("count of scenes in work %s = %d; expected %d", work, actual, expected)
-	}
+func TestLoadOutline(t *testing.T) {
+	manuscript := ms2.MustLoad("../../test-data/manuscripts/outline")
+	assertWorkCount(t, manuscript, 1)
+	assertWorkMetadata(t, manuscript.Works()[0], "Outline Example", "Outline", "Geoff Coffey", "Coffey")
+
+	assertFolderCount(t, manuscript.Works()[0], 3)
+
+	assertFolderMetadata(t, manuscript.Works()[0].Folders()[0], 0, "Act 1")
+	assertFolderCount(t, manuscript.Works()[0].Folders()[0], 2)
+	assertFolderMetadata(t, manuscript.Works()[0].Folders()[0].Folders()[0], 0, "At home")
+	assertSceneCount(t, manuscript.Works()[0].Folders()[0].Folders()[0], 2)
+	assertSceneMetadata(t, manuscript.Works()[0].Folders()[0].Folders()[0].Scenes()[0], 0, "Scene")
+	assertSceneTextStartsWithLorem(t, manuscript.Works()[0].Folders()[0].Folders()[0].Scenes()[0])
+	assertSceneMetadata(t, manuscript.Works()[0].Folders()[0].Folders()[0].Scenes()[1], 1, "Scene")
+	assertSceneTextStartsWithLorem(t, manuscript.Works()[0].Folders()[0].Folders()[0].Scenes()[1])
+
+	assertFolderMetadata(t, manuscript.Works()[0].Folders()[0].Folders()[1], 1, "On the way")
+	assertSceneCount(t, manuscript.Works()[0].Folders()[0].Folders()[1], 2)
+	assertSceneMetadata(t, manuscript.Works()[0].Folders()[0].Folders()[1].Scenes()[0], 0, "Scene")
+	assertSceneTextStartsWithLorem(t, manuscript.Works()[0].Folders()[0].Folders()[1].Scenes()[0])
+	assertSceneMetadata(t, manuscript.Works()[0].Folders()[0].Folders()[1].Scenes()[1], 1, "Scene")
+	assertSceneTextStartsWithLorem(t, manuscript.Works()[0].Folders()[1].Folders()[0].Scenes()[1])
+
+	assertFolderMetadata(t, manuscript.Works()[0].Folders()[1], 1, "Act 2")
+	assertFolderCount(t, manuscript.Works()[0].Folders()[1], 2)
+	assertFolderMetadata(t, manuscript.Works()[0].Folders()[1].Folders()[0], 0, "Begin to climb")
+	assertSceneCount(t, manuscript.Works()[0].Folders()[1].Folders()[0], 2)
+	assertSceneMetadata(t, manuscript.Works()[0].Folders()[1].Folders()[0].Scenes()[0], 0, "Scene")
+	assertSceneTextStartsWithLorem(t, manuscript.Works()[0].Folders()[1].Folders()[0].Scenes()[0])
+	assertSceneMetadata(t, manuscript.Works()[0].Folders()[1].Folders()[0].Scenes()[1], 1, "Scene")
+	assertSceneTextStartsWithLorem(t, manuscript.Works()[0].Folders()[1].Folders()[0].Scenes()[1])
+
+	assertFolderMetadata(t, manuscript.Works()[0].Folders()[1].Folders()[1], 1, "Pinnacle")
+	assertSceneCount(t, manuscript.Works()[0].Folders()[1].Folders()[1], 2)
+	assertSceneMetadata(t, manuscript.Works()[0].Folders()[1].Folders()[1].Scenes()[0], 0, "Scene")
+	assertSceneTextStartsWithLorem(t, manuscript.Works()[0].Folders()[1].Folders()[1].Scenes()[0])
+	assertSceneMetadata(t, manuscript.Works()[0].Folders()[1].Folders()[1].Scenes()[1], 1, "Scene")
+	assertSceneTextStartsWithLorem(t, manuscript.Works()[0].Folders()[1].Folders()[1].Scenes()[1])
+
+	assertFolderMetadata(t, manuscript.Works()[0].Folders()[2], 2, "Act 3")
+	assertFolderCount(t, manuscript.Works()[0].Folders()[2], 2)
+	assertFolderMetadata(t, manuscript.Works()[0].Folders()[2].Folders()[0], 0, "Realization")
+	assertSceneCount(t, manuscript.Works()[0].Folders()[2].Folders()[0], 2)
+	assertSceneMetadata(t, manuscript.Works()[0].Folders()[2].Folders()[0].Scenes()[0], 0, "Scene")
+	assertSceneTextStartsWithLorem(t, manuscript.Works()[0].Folders()[2].Folders()[0].Scenes()[0])
+	assertSceneMetadata(t, manuscript.Works()[0].Folders()[2].Folders()[0].Scenes()[1], 1, "Scene")
+	assertSceneTextStartsWithLorem(t, manuscript.Works()[0].Folders()[2].Folders()[0].Scenes()[1])
+
+	assertFolderMetadata(t, manuscript.Works()[0].Folders()[2].Folders()[1], 1, "Resolution")
+	assertSceneCount(t, manuscript.Works()[0].Folders()[2].Folders()[1], 2)
+	assertSceneMetadata(t, manuscript.Works()[0].Folders()[2].Folders()[1].Scenes()[0], 0, "Scene")
+	assertSceneTextStartsWithLorem(t, manuscript.Works()[0].Folders()[2].Folders()[1].Scenes()[0])
+	assertSceneMetadata(t, manuscript.Works()[0].Folders()[2].Folders()[1].Scenes()[1], 1, "Scene")
+	assertSceneTextStartsWithLorem(t, manuscript.Works()[0].Folders()[2].Folders()[1].Scenes()[1])
+
+	assertChapterCount(t, manuscript.Works()[0], 5)
+	assertSceneCount(t, manuscript.Works()[0].Chapters()[0], 2)
+	assertSceneMetadata(t, manuscript.Works()[0].Chapters()[0].Scenes()[0], 0, "Scene")
+	assertSceneMetadata(t, manuscript.Works()[0].Chapters()[0].Scenes()[1], 1, "Scene")
+
+	assertSceneCount(t, manuscript.Works()[0].Chapters()[1], 2)
+	assertSceneMetadata(t, manuscript.Works()[0].Chapters()[1].Scenes()[0], 0, "Scene")
+	assertSceneMetadata(t, manuscript.Works()[0].Chapters()[1].Scenes()[1], 1, "Scene")
+
+	assertSceneCount(t, manuscript.Works()[0].Chapters()[2], 4)
+	assertSceneMetadata(t, manuscript.Works()[0].Chapters()[2].Scenes()[0], 0, "Scene")
+	assertSceneMetadata(t, manuscript.Works()[0].Chapters()[2].Scenes()[1], 1, "Scene")
+	assertSceneMetadata(t, manuscript.Works()[0].Chapters()[2].Scenes()[2], 0, "Scene")
+	assertSceneMetadata(t, manuscript.Works()[0].Chapters()[2].Scenes()[3], 1, "Scene")
+
+	assertSceneCount(t, manuscript.Works()[0].Chapters()[3], 2)
+	assertSceneMetadata(t, manuscript.Works()[0].Chapters()[3].Scenes()[0], 0, "Scene")
+	assertSceneMetadata(t, manuscript.Works()[0].Chapters()[3].Scenes()[1], 1, "Scene")
+
+	assertSceneCount(t, manuscript.Works()[0].Chapters()[4], 2)
+	assertSceneMetadata(t, manuscript.Works()[0].Chapters()[4].Scenes()[0], 0, "Scene")
+	assertSceneMetadata(t, manuscript.Works()[0].Chapters()[4].Scenes()[1], 1, "Scene")
 }
 
-func assertSceneMetadata(t *testing.T, scene ms2.Scene, number int) {
-	if scene.Number() != number {
-		t.Errorf("number of %s = %d; expected %d", scene, scene.Number(), number)
-	}
-}
-
-func assertSceneTextStartsWithLorem(t *testing.T, scene ms2.Scene) {
-	text1, err := scene.Text()
-	if err != nil {
-		panic(err)
-	}
-	if expected, actual := "Lorem", strings.Fields(text1)[0]; expected != actual {
-		t.Errorf("scene %s starts with '%v'; expected '%v'", scene.Path(), actual, expected)
-	}
-}
-
-func assertChapterCount(t *testing.T, work ms2.Work, expected int) {
-	if actual := len(work.Chapters()); expected != actual {
-		t.Fatalf("count of chapters in work %s = %d; expected %d", work, actual, expected)
-	}
-}
-
-func assertFolderCount(t *testing.T, work ms2.Work, expected int) {
-	if actual := len(work.Folders()); expected != actual {
-		t.Fatalf("count of folders in work %s = %d; expected %d", work, actual, expected)
-	}
-}
-
-func mustChdir(path string) {
-	err := os.Chdir(path)
-	if err != nil {
-		panic(err)
-	}
-}
-
-func withExemplar(name string, runner func()) {
-	// record the working dir
-	wd, err := os.Getwd()
-	if err != nil {
-		panic(err)
+func TestLoadInvalidOrphanScenes(t *testing.T) {
+	_, err := ms2.Load("../../test-data/manuscripts/invalid/orphan-scenes")
+	if err == nil {
+		t.Errorf("load orphan-scenes did not produce error")
+	} else if expected := "has scenes before the first chapter"; !strings.HasSuffix(err.Error(), expected) {
+		t.Fatalf("load orphan-scenes error = %v; expected ...%v", err, expected)
 	}
 
-	// defer changing back when we're done
-	defer mustChdir(wd)
+	_, err = ms2.Load("../../test-data/manuscripts/invalid/no-works")
+	if err == nil {
+		t.Errorf("load no-works did not produce error")
+	} else if expected := "has no works"; !strings.HasSuffix(err.Error(), expected) {
+		t.Fatalf("load orphan-scenes error = %v; expected ...%v", err, expected)
+	}
 
-	// change to the test dir
-	mustChdir(filepath.Join("../../test-data/manuscripts", name))
-
-	// run the test
-	runner()
 }
