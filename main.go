@@ -1,45 +1,26 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"github.com/alexflint/go-arg"
 	"gwcoffey/otis/commands/compile"
 	"gwcoffey/otis/commands/echo"
 	"gwcoffey/otis/commands/wordcount"
-	"os"
-	"path/filepath"
+	"gwcoffey/otis/shared/cfg"
 )
 
 var args struct {
-	MsPath    *string         `arg:"--manuscript" help:"path to the manuscript (when not specified use current project)"`
-	Echo      *echo.Args      `arg:"subcommand:echo"`
-	WordCount *wordcount.Args `arg:"subcommand:wordcount"`
-	Compile   *compile.Args   `arg:"subcommand:compile"`
-}
-
-func findRoot() (path string, err error) {
-	path, err = os.Getwd()
-	if err != nil {
-		return
-	}
-
-	for path != "/" {
-		otisPath := filepath.Join(path, "otis.yml")
-		if _, err = os.Stat(otisPath); err == nil || !os.IsNotExist(err) {
-			return
-		}
-		path = filepath.Dir(path)
-	}
-
-	return "", errors.New("this is not an otis project")
+	ProjectPath *string         `arg:"--project" help:"path to the project directory (when not specified use current project)"`
+	Echo        *echo.Args      `arg:"subcommand:echo"`
+	WordCount   *wordcount.Args `arg:"subcommand:wordcount"`
+	Compile     *compile.Args   `arg:"subcommand:compile"`
 }
 
 func getMsPath() (msPath string, err error) {
-	if args.MsPath != nil {
-		return *args.MsPath, nil
+	if args.ProjectPath != nil {
+		return *args.ProjectPath, nil
 	} else {
-		return findRoot()
+		return cfg.ProjectPath()
 	}
 }
 
@@ -49,7 +30,7 @@ func main() {
 		p.Fail("missing subcommand")
 	}
 
-	msPath, err := getMsPath()
+	projectPath, err := getMsPath()
 	if err != nil {
 		panic(err)
 	}
@@ -58,9 +39,9 @@ func main() {
 	case args.Echo != nil:
 		echo.Echo(args.Echo)
 	case args.WordCount != nil:
-		wordcount.WordCount(msPath, args.WordCount)
+		wordcount.WordCount(projectPath, args.WordCount)
 	case args.Compile != nil:
-		compile.Compile(args.Compile)
+		compile.Compile(projectPath, args.Compile)
 	default:
 		panic(fmt.Sprintf("unexpected and unhandled command"))
 	}

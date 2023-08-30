@@ -7,6 +7,7 @@ import (
 	"gwcoffey/otis/shared/latex"
 	"gwcoffey/otis/shared/ms"
 	"os"
+	"path/filepath"
 	"strings"
 	"text/template"
 )
@@ -36,12 +37,18 @@ func Markdown(md string) string {
 	return latex.Escape(latex.FormatMarkdown(md))
 }
 
-func Compile(args *Args) {
-	config := cfg.FindAndLoad()
-	manuscript := ms.MustLoad("manuscript/")
+func Compile(projectPath string, args *Args) {
+	config, err := cfg.FindAndLoad()
+	if err != nil {
+		panic(err)
+	}
 
-	tmpl, err := template.
-		New("document").
+	manuscript, err := ms.Load(filepath.Join(projectPath, "manuscript"))
+	if err != nil {
+		panic(err)
+	}
+
+	tmpl, err := template.New("document").
 		Funcs(template.FuncMap{
 			"command":   Command,
 			"multiline": Multiline,

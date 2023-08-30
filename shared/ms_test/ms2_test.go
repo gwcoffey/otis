@@ -2,17 +2,22 @@ package ms
 
 import (
 	"gwcoffey/otis/shared/ms"
+	"path/filepath"
 	"strings"
 	"testing"
 )
 
+func exPath(name string) string {
+	return filepath.Join("../../test-data/projects", name, "manuscript")
+}
+
 func TestLoadErrors(t *testing.T) {
-	_, err := ms.Load("../../test-data/manuscripts/does-not-exist")
+	_, err := ms.Load(exPath("does-not-exist"))
 	if err == nil {
 		t.Error("Load(...) error = nil; expected non-nil")
 	}
 
-	_, err = ms.Load("../../test-data/manuscripts/flat")
+	_, err = ms.Load(exPath("flat"))
 	if err != nil {
 		t.Errorf("Load(...) error = '%v'; expected nil", err)
 	}
@@ -25,7 +30,7 @@ func TestMustLoadErrors(t *testing.T) {
 			t.Error("MustLoad(...) error = nil; expected non-nil")
 		}
 	}()
-	ms.MustLoad("../../test-data/manuscripts/does-not-exist")
+	ms.MustLoad(exPath("does-not-exist"))
 
 	defer func() {
 		err := recover()
@@ -33,11 +38,11 @@ func TestMustLoadErrors(t *testing.T) {
 			t.Errorf("MustLoad(...) error = '%v'; expected nil", err)
 		}
 	}()
-	ms.MustLoad("../../test-data/manuscripts/flat")
+	ms.MustLoad(exPath("flat"))
 }
 
 func TestMustLoadFlat(t *testing.T) {
-	manuscript := ms.MustLoad("../../test-data/manuscripts/flat")
+	manuscript := ms.MustLoad(exPath("flat"))
 	assertWorkCount(t, manuscript, 1)
 	assertWorkMetadata(t, manuscript.Works()[0], "Flat Example", "Flat", "Geoff Coffey", "Coffey")
 	assertSceneCount(t, manuscript.Works()[0], 2)
@@ -50,7 +55,7 @@ func TestMustLoadFlat(t *testing.T) {
 }
 
 func TestMustLoadChapters(t *testing.T) {
-	manuscript := ms.MustLoad("../../test-data/manuscripts/chapters")
+	manuscript := ms.MustLoad(exPath("chapters"))
 	assertWorkCount(t, manuscript, 1)
 	assertWorkMetadata(t, manuscript.Works()[0], "Chapters Example", "Chapters", "Geoff Coffey", "Coffey")
 	assertSceneCount(t, manuscript.Works()[0], 0)
@@ -71,7 +76,7 @@ func TestMustLoadChapters(t *testing.T) {
 }
 
 func TestMustLoadMultiWork(t *testing.T) {
-	manuscript := ms.MustLoad("../../test-data/manuscripts/multi-work")
+	manuscript := ms.MustLoad(exPath("multi-work"))
 
 	assertWorkCount(t, manuscript, 2)
 
@@ -95,7 +100,7 @@ func TestMustLoadMultiWork(t *testing.T) {
 }
 
 func TestLoadOutline(t *testing.T) {
-	manuscript := ms.MustLoad("../../test-data/manuscripts/outline")
+	manuscript := ms.MustLoad(exPath("outline"))
 	assertWorkCount(t, manuscript, 1)
 	assertWorkMetadata(t, manuscript.Works()[0], "Outline Example", "Outline", "Geoff Coffey", "Coffey")
 
@@ -174,14 +179,14 @@ func TestLoadOutline(t *testing.T) {
 }
 
 func TestLoadInvalidOrphanScenes(t *testing.T) {
-	_, err := ms.Load("../../test-data/manuscripts/invalid/orphan-scenes")
+	_, err := ms.Load(exPath("invalid/orphan-scenes"))
 	if err == nil {
 		t.Errorf("load orphan-scenes did not produce error")
 	} else if expected := "has scenes before the first chapter"; !strings.HasSuffix(err.Error(), expected) {
 		t.Fatalf("load orphan-scenes error = %v; expected ...%v", err, expected)
 	}
 
-	_, err = ms.Load("../../test-data/manuscripts/invalid/no-works")
+	_, err = ms.Load(exPath("invalid/no-works"))
 	if err == nil {
 		t.Errorf("load no-works did not produce error")
 	} else if expected := "has no works"; !strings.HasSuffix(err.Error(), expected) {

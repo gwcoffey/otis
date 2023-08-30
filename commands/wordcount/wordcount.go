@@ -194,11 +194,11 @@ func selectWorks(args *Args, manuscript ms.Manuscript) (works []ms.Work, err err
 	return
 }
 
-func WordCount(msPath string, args *Args) {
+func WordCount(projectPath string, args *Args) {
 	var manuscript ms.Manuscript
 	var err error
 
-	manuscript, err = ms.Load(msPath)
+	manuscript, err = ms.Load(filepath.Join(projectPath, "manuscript"))
 	if err != nil {
 		panic(err)
 	}
