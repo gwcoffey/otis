@@ -1,10 +1,13 @@
 package wordcount
 
 import (
+	"errors"
 	"fmt"
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
 	"gwcoffey/otis/shared/ms"
+	"os"
+	"path/filepath"
 	"strings"
 	"unicode/utf8"
 )
@@ -13,26 +16,37 @@ const maxWidth = 40
 const indentSize = "  "
 
 type Args struct {
-	Path *string `arg:"positional" help:"count only the sub-path within manuscript"`
+	Work      *string `arg:"positional" help:"count only the specified work in a multi-work manuscript"`
+	MsPath    *string `arg:"--manuscript" help:"path to the manuscript (defaults to the manuscript in the current directory)"`
+	ByChapter bool    `arg:"--chapter" help:"count by chapter rather than by folder"`
 }
 
-func sceneWordCount(scene ms.Scene) int {
+type printBy int
+
+const (
+	byFolder printBy = iota
+	byChapter
+)
+
+func sceneWordCount(scene ms.Scene) (count int, err error) {
 	text, err := scene.Text()
 	if err != nil {
-		panic(err)
+		return
 	}
-	return len(strings.Fields(*text))
+	count = len(strings.Fields(text))
+	return
 }
 
-func dirWordCount(dir ms.Dir) int {
-	total := 0
-	for _, scene := range dir.Scenes() {
-		total += sceneWordCount(scene)
+func workWordCount(work ms.Work) (count int, err error) {
+	for _, scene := range work.AllScenes() {
+		var scount int
+		scount, err = sceneWordCount(scene)
+		if err != nil {
+			return
+		}
+		count += scount
 	}
-	for _, subdir := range dir.SubDirs() {
-		total += dirWordCount(subdir)
-	}
-	return total
+	return
 }
 
 func truncate(str string) string {
@@ -43,18 +57,115 @@ func truncate(str string) string {
 	return result
 }
 
-func printDir(dir ms.Dir, indent string) {
-	printLine(truncate(indent+dir.Name()), dirWordCount(dir), true)
-	for _, subdir := range dir.SubDirs() {
-		printDir(subdir, indent+indentSize)
+func printWork(work ms.Work, by printBy) (err error) {
+	count, err := workWordCount(work)
+	if err != nil {
+		return
 	}
-	for _, scene := range dir.Scenes() {
-		printScene(scene, indent+indentSize)
+	printLine(truncate(work.Title()), count, true)
+
+	for _, scene := range work.Scenes() {
+		err = printScene(scene, indentSize)
+		if err != nil {
+			return
+		}
 	}
+
+	switch by {
+	case byFolder:
+		for _, folder := range work.Folders() {
+			err = printFolder(folder, indentSize)
+			if err != nil {
+				return
+			}
+		}
+	case byChapter:
+		for _, chapter := range work.Chapters() {
+			err = printChapter(chapter, indentSize)
+			if err != nil {
+				return
+			}
+		}
+	}
+	return
 }
 
-func printScene(scene ms.Scene, indent string) {
-	printLine(truncate(indent+scene.Name()), sceneWordCount(scene), false)
+func printFolder(folder ms.Folder, indent string) (err error) {
+	fcount, err := folderWordCount(folder)
+	if err != nil {
+		return
+	}
+
+	label := fmt.Sprintf("%02d. %s", folder.Number()+1, folder.PrettyFileName())
+
+	printLine(truncate(indent+label), fcount, true)
+
+	for _, scene := range folder.Scenes() {
+		err = printScene(scene, indent+indentSize)
+		if err != nil {
+			return
+		}
+	}
+
+	for _, child := range folder.Folders() {
+		err = printFolder(child, indent+indentSize)
+		if err != nil {
+			return
+		}
+	}
+
+	return
+}
+
+func folderWordCount(folder ms.Folder) (count int, err error) {
+	for _, scene := range folder.AllScenes() {
+		var scount int
+		scount, err = sceneWordCount(scene)
+		if err != nil {
+			return
+		}
+		count += scount
+	}
+	return
+}
+
+func printChapter(chapter ms.Chapter, indent string) (err error) {
+	ccount, err := chapterWordCount(chapter)
+	if err != nil {
+		return
+	}
+
+	var label string
+	if chapter.Number() != nil {
+		label = fmt.Sprintf("% 2d. %s", *chapter.Number(), chapter.Title())
+	} else {
+		label = fmt.Sprintf("    %s", chapter.Title())
+	}
+
+	printLine(truncate(indent+label), ccount, false)
+	return
+}
+
+func chapterWordCount(chapter ms.Chapter) (count int, err error) {
+	var scount int
+	for _, scene := range chapter.Scenes() {
+		scount, err = sceneWordCount(scene)
+		if err != nil {
+			return
+		}
+		count += scount
+	}
+	return
+}
+
+func printScene(scene ms.Scene, indent string) (err error) {
+	scount, err := sceneWordCount(scene)
+	if err != nil {
+		return
+	}
+	label := fmt.Sprintf("%02d. %s", scene.Number()+1, scene.PrettyFileName())
+	printLine(truncate(indent+label), scount, false)
+	return
 }
 
 func printLine(label string, count int, emphasize bool) {
@@ -69,24 +180,77 @@ func printLine(label string, count int, emphasize bool) {
 	}
 }
 
-func findMsRoot(path *string) ms.Dir {
-	root := ms.Load()
-
-	// if a path is specified dig for it
-	if path != nil {
-		for _, name := range strings.Split(*path, "/") {
-			newRoot := root.SubDir(name)
-			if newRoot == nil {
-				panic(fmt.Sprintf("no such manuscript directory: %s", path))
-			}
-			root = *newRoot
-		}
+func findOtisRoot() (path string, err error) {
+	path, err = os.Getwd()
+	if err != nil {
+		return
 	}
 
-	return root
+	for path != "/" {
+		otisPath := filepath.Join(path, "otis.yml")
+		if _, err = os.Stat(otisPath); err == nil || !os.IsNotExist(err) {
+			return
+		}
+		path = filepath.Dir(path)
+	}
+
+	return "", errors.New("this is not an otis project")
+}
+
+func manuscriptPath(args *Args) (msPath string, err error) {
+	if args.MsPath != nil {
+		msPath = *args.MsPath
+	} else {
+		msPath, err = findOtisRoot()
+		if err != nil {
+			panic(err)
+		}
+		msPath = filepath.Join(msPath, "manuscript/")
+	}
+	return msPath, err
+}
+
+func selectWorks(args *Args, manuscript ms.Manuscript) (works []ms.Work, err error) {
+	works = manuscript.Works()
+
+	if args.Work != nil {
+		for _, work := range works {
+			if filepath.Base(work.Path()) == *args.Work {
+				works = []ms.Work{work}
+				return
+			}
+		}
+		err = errors.New(fmt.Sprintf("no such work: %s", *args.Work))
+	}
+
+	return
 }
 
 func WordCount(args *Args) {
-	root := findMsRoot(args.Path)
-	printDir(root, "")
+	msPath, err := manuscriptPath(args)
+	if err != nil {
+		panic(err)
+	}
+
+	manuscript, err := ms.Load(msPath)
+	if err != nil {
+		panic(err)
+	}
+
+	works, err := selectWorks(args, manuscript)
+	if err != nil {
+		panic(err)
+	}
+
+	by := byFolder
+	if args.ByChapter {
+		by = byChapter
+	}
+
+	for _, work := range works {
+		err := printWork(work, by)
+		if err != nil {
+			panic(err)
+		}
+	}
 }

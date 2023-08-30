@@ -1,18 +1,18 @@
-package ms2
+package ms
 
 import (
-	"gwcoffey/otis/shared/ms2"
+	"gwcoffey/otis/shared/ms"
 	"strings"
 	"testing"
 )
 
 func TestLoadErrors(t *testing.T) {
-	_, err := ms2.Load("../../test-data/manuscripts/does-not-exist")
+	_, err := ms.Load("../../test-data/manuscripts/does-not-exist")
 	if err == nil {
 		t.Error("Load(...) error = nil; expected non-nil")
 	}
 
-	_, err = ms2.Load("../../test-data/manuscripts/flat")
+	_, err = ms.Load("../../test-data/manuscripts/flat")
 	if err != nil {
 		t.Errorf("Load(...) error = '%v'; expected nil", err)
 	}
@@ -25,7 +25,7 @@ func TestMustLoadErrors(t *testing.T) {
 			t.Error("MustLoad(...) error = nil; expected non-nil")
 		}
 	}()
-	ms2.MustLoad("../../test-data/manuscripts/does-not-exist")
+	ms.MustLoad("../../test-data/manuscripts/does-not-exist")
 
 	defer func() {
 		err := recover()
@@ -33,11 +33,11 @@ func TestMustLoadErrors(t *testing.T) {
 			t.Errorf("MustLoad(...) error = '%v'; expected nil", err)
 		}
 	}()
-	ms2.MustLoad("../../test-data/manuscripts/flat")
+	ms.MustLoad("../../test-data/manuscripts/flat")
 }
 
 func TestMustLoadFlat(t *testing.T) {
-	manuscript := ms2.MustLoad("../../test-data/manuscripts/flat")
+	manuscript := ms.MustLoad("../../test-data/manuscripts/flat")
 	assertWorkCount(t, manuscript, 1)
 	assertWorkMetadata(t, manuscript.Works()[0], "Flat Example", "Flat", "Geoff Coffey", "Coffey")
 	assertSceneCount(t, manuscript.Works()[0], 2)
@@ -50,13 +50,13 @@ func TestMustLoadFlat(t *testing.T) {
 }
 
 func TestMustLoadChapters(t *testing.T) {
-	manuscript := ms2.MustLoad("../../test-data/manuscripts/chapters")
+	manuscript := ms.MustLoad("../../test-data/manuscripts/chapters")
 	assertWorkCount(t, manuscript, 1)
 	assertWorkMetadata(t, manuscript.Works()[0], "Chapters Example", "Chapters", "Geoff Coffey", "Coffey")
 	assertSceneCount(t, manuscript.Works()[0], 0)
 	assertChapterCount(t, manuscript.Works()[0], 2)
-	assertChapterMetadata(t, manuscript.Works()[0].Chapters()[0], "My Epilogue", false)
-	assertChapterMetadata(t, manuscript.Works()[0].Chapters()[1], "My Chapter", true)
+	assertChapterMetadata(t, manuscript.Works()[0].Chapters()[0], "My Epilogue", 0)
+	assertChapterMetadata(t, manuscript.Works()[0].Chapters()[1], "My Chapter", 1)
 	assertSceneCount(t, manuscript.Works()[0].Chapters()[0], 1)
 	assertSceneMetadata(t, manuscript.Works()[0].Chapters()[0].Scenes()[0], 0, "Scene")
 	assertSceneTextStartsWithLorem(t, manuscript.Works()[0].Chapters()[0].Scenes()[0])
@@ -71,7 +71,7 @@ func TestMustLoadChapters(t *testing.T) {
 }
 
 func TestMustLoadMultiWork(t *testing.T) {
-	manuscript := ms2.MustLoad("../../test-data/manuscripts/multi-work")
+	manuscript := ms.MustLoad("../../test-data/manuscripts/multi-work")
 
 	assertWorkCount(t, manuscript, 2)
 
@@ -95,7 +95,7 @@ func TestMustLoadMultiWork(t *testing.T) {
 }
 
 func TestLoadOutline(t *testing.T) {
-	manuscript := ms2.MustLoad("../../test-data/manuscripts/outline")
+	manuscript := ms.MustLoad("../../test-data/manuscripts/outline")
 	assertWorkCount(t, manuscript, 1)
 	assertWorkMetadata(t, manuscript.Works()[0], "Outline Example", "Outline", "Geoff Coffey", "Coffey")
 
@@ -174,14 +174,14 @@ func TestLoadOutline(t *testing.T) {
 }
 
 func TestLoadInvalidOrphanScenes(t *testing.T) {
-	_, err := ms2.Load("../../test-data/manuscripts/invalid/orphan-scenes")
+	_, err := ms.Load("../../test-data/manuscripts/invalid/orphan-scenes")
 	if err == nil {
 		t.Errorf("load orphan-scenes did not produce error")
 	} else if expected := "has scenes before the first chapter"; !strings.HasSuffix(err.Error(), expected) {
 		t.Fatalf("load orphan-scenes error = %v; expected ...%v", err, expected)
 	}
 
-	_, err = ms2.Load("../../test-data/manuscripts/invalid/no-works")
+	_, err = ms.Load("../../test-data/manuscripts/invalid/no-works")
 	if err == nil {
 		t.Errorf("load no-works did not produce error")
 	} else if expected := "has no works"; !strings.HasSuffix(err.Error(), expected) {

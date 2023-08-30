@@ -1,4 +1,4 @@
-package ms2
+package ms
 
 type FileSystemObject interface {
 	Path() string

@@ -17,7 +17,7 @@ type Args struct {
 
 type templParams struct {
 	Config     cfg.Config
-	Manuscript ms.Dir
+	Manuscript ms.Manuscript
 }
 
 //go:embed output.tex.tmpl
@@ -38,7 +38,7 @@ func Markdown(md string) string {
 
 func Compile(args *Args) {
 	config := cfg.FindAndLoad()
-	manuscript := ms.Load()
+	manuscript := ms.MustLoad("manuscript/")
 
 	tmpl, err := template.
 		New("document").

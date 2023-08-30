@@ -1,12 +1,12 @@
-package ms2
+package ms
 
 import "fmt"
 
 type scene struct {
-	*node
-	*folder
-	*work
-	*chapter
+	node    *node
+	folder  *folder
+	work    *work
+	chapter *chapter
 }
 
 type Scene interface {

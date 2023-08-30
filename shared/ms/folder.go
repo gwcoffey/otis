@@ -1,12 +1,12 @@
-package ms2
+package ms
 
 import (
 	"fmt"
 )
 
 type folder struct {
-	*node
-	*manuscript
+	node         *node
+	manuscript   *manuscript
 	parentFolder *folder
 }
 
@@ -15,6 +15,7 @@ type Folder interface {
 	FileSystemObject
 	Scener
 	Folderer
+	AllScenes() []Scene
 }
 
 type Folderer interface {
@@ -47,5 +48,14 @@ func (f *folder) Scenes() (scenes []Scene) {
 			scenes = append(scenes, &scene{node: child, folder: f})
 		}
 	}
+	return
+}
+
+func (f *folder) AllScenes() (scenes []Scene) {
+	f.node.walk(func(node *node) {
+		if !node.isDir {
+			scenes = append(scenes, &scene{node: node, folder: f})
+		}
+	})
 	return
 }

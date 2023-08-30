@@ -1,21 +1,22 @@
-package ms2
+package ms
 
 import "fmt"
 
 type chapter struct {
-	*node
-	*work
+	node   *node
+	work   *work
+	number *int
 }
 
 type Chapter interface {
 	fmt.Stringer
 	Scener
 	Title() string
-	Numbered() bool
+	Number() *int
 }
 
 func (c *chapter) String() string {
-	return fmt.Sprintf("Chapter{%s} of %s", c.Title(), c.manuscript)
+	return fmt.Sprintf("Chapter{%s} of %s", c.Title(), c.work.manuscript)
 }
 
 // Scenes returns the ordered set of scenes in this chapter. Because chapters are really just waypoints
@@ -24,12 +25,12 @@ func (c *chapter) String() string {
 // the result. And once we encounter the next chapter node, we stop gathering.
 func (c *chapter) Scenes() (scenes []Scene) {
 	capturing := false
-	c.work.walk(func(node *node) {
-		if node.chapterMeta == c.chapterMeta {
+	c.work.node.walk(func(node *node) {
+		if node.chapterMeta == c.node.chapterMeta {
 			capturing = true
 		}
 		if capturing {
-			if node.chapterMeta != nil && node.chapterMeta != c.chapterMeta {
+			if node.chapterMeta != nil && node.chapterMeta != c.node.chapterMeta {
 				capturing = false
 			} else if !node.isDir {
 				scenes = append(scenes, &scene{node: node, chapter: c})
@@ -44,6 +45,6 @@ func (c *chapter) Title() string {
 	return c.node.chapterMeta.Title
 }
 
-func (c *chapter) Numbered() bool {
-	return c.node.chapterMeta.Numbered
+func (c *chapter) Number() *int {
+	return c.number
 }

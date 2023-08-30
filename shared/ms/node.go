@@ -1,4 +1,4 @@
-package ms2
+package ms
 
 import (
 	"errors"
@@ -38,7 +38,7 @@ type workMeta struct {
 // directory represented by the node (fields are exported to support YAML unmarshalling)
 type chapterMeta struct {
 	Title    string `yaml:"title"`
-	Numbered bool   `yaml:"numbered"`
+	Numbered *bool  `yaml:"numbered"`
 }
 
 var metaFilenames = map[string]bool{

@@ -1,11 +1,15 @@
-package ms2
+package ms
+
+import "fmt"
 
 type work struct {
-	*node
-	*manuscript
+	node       *node
+	manuscript *manuscript
 }
 
 type Work interface {
+	fmt.Stringer
+	FileSystemObject
 	Scener
 	Folderer
 	AllScenes() []Scene
@@ -14,6 +18,22 @@ type Work interface {
 	Author() string
 	AuthorSurname() string
 	Chapters() []Chapter
+}
+
+func (w *work) String() string {
+	return fmt.Sprintf("Work{%s}", w.node.path)
+}
+
+func (w *work) Path() string {
+	return w.node.path
+}
+
+func (w *work) PrettyFileName() string {
+	return w.node.prettyFileName()
+}
+
+func (w *work) Number() int {
+	return w.node.fileNumber
 }
 
 func (w *work) AllScenes() (scenes []Scene) {
@@ -53,9 +73,16 @@ func (w *work) Scenes() (scenes []Scene) {
 
 func (w *work) Chapters() (chapters []Chapter) {
 
+	count := 1
 	w.node.walk(func(node *node) {
 		if node.chapterMeta != nil {
-			chapters = append(chapters, &chapter{node: node, work: w})
+			var number *int
+			if node.chapterMeta.Numbered == nil || *node.chapterMeta.Numbered {
+				newNumber := count
+				number = &newNumber
+				count++
+			}
+			chapters = append(chapters, &chapter{node: node, work: w, number: number})
 		}
 	})
 
