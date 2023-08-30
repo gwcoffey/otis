@@ -6,7 +6,6 @@ import (
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
 	"gwcoffey/otis/shared/ms"
-	"os"
 	"path/filepath"
 	"strings"
 	"unicode/utf8"
@@ -17,7 +16,6 @@ const indentSize = "  "
 
 type Args struct {
 	Work      *string `arg:"positional" help:"count only the specified work in a multi-work manuscript"`
-	MsPath    *string `arg:"--manuscript" help:"path to the manuscript (defaults to the manuscript in the current directory)"`
 	ByChapter bool    `arg:"--chapter" help:"count by chapter rather than by folder"`
 }
 
@@ -180,36 +178,6 @@ func printLine(label string, count int, emphasize bool) {
 	}
 }
 
-func findOtisRoot() (path string, err error) {
-	path, err = os.Getwd()
-	if err != nil {
-		return
-	}
-
-	for path != "/" {
-		otisPath := filepath.Join(path, "otis.yml")
-		if _, err = os.Stat(otisPath); err == nil || !os.IsNotExist(err) {
-			return
-		}
-		path = filepath.Dir(path)
-	}
-
-	return "", errors.New("this is not an otis project")
-}
-
-func manuscriptPath(args *Args) (msPath string, err error) {
-	if args.MsPath != nil {
-		msPath = *args.MsPath
-	} else {
-		msPath, err = findOtisRoot()
-		if err != nil {
-			panic(err)
-		}
-		msPath = filepath.Join(msPath, "manuscript/")
-	}
-	return msPath, err
-}
-
 func selectWorks(args *Args, manuscript ms.Manuscript) (works []ms.Work, err error) {
 	works = manuscript.Works()
 
@@ -226,13 +194,11 @@ func selectWorks(args *Args, manuscript ms.Manuscript) (works []ms.Work, err err
 	return
 }
 
-func WordCount(args *Args) {
-	msPath, err := manuscriptPath(args)
-	if err != nil {
-		panic(err)
-	}
+func WordCount(msPath string, args *Args) {
+	var manuscript ms.Manuscript
+	var err error
 
-	manuscript, err := ms.Load(msPath)
+	manuscript, err = ms.Load(msPath)
 	if err != nil {
 		panic(err)
 	}
