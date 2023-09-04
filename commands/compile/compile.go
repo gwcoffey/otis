@@ -20,9 +20,9 @@ import (
 type Format int
 
 type Args struct {
-	WorkName   *string `arg:"positional" help:"the work to compile, required if the manuscript has multiple works"`
-	Submission bool    `help:"compile for submission"`
-	Format     string  `help:"the compiled output format (PDF, RTF, HTML, or TEX)" default:"PDF"`
+	WorkName *string `arg:"positional" help:"the work to compile, required if the manuscript has multiple works"`
+	Format   string  `arg:"-f" help:"the compiled output format (PDF, RTF, HTML, or TEX)" default:"PDF"`
+	Tag      *string `arg:"-t" help:"tag to append to the filename, [default: <current date>]"`
 }
 
 func selectWork(args *Args, manuscript ms.Manuscript) ms.Work {
@@ -227,7 +227,12 @@ func Compile(config cfg.Config, args *Args) {
 
 	work := selectWork(args, manuscript)
 
-	fileName := fmt.Sprintf("%s-%s", text.ToKebab(work.Title()), time.Now().Format("2006-01-02"))
+	var fileName string
+	if args.Tag != nil {
+		fileName = fmt.Sprintf("%s-%s", text.ToKebab(work.Title()), *args.Tag)
+	} else {
+		fileName = fmt.Sprintf("%s-%s", text.ToKebab(work.Title()), time.Now().Format("2006-01-02"))
+	}
 
 	switch strings.ToUpper(args.Format) {
 	case "PDF":
