@@ -1,6 +1,6 @@
 # Otis
 
-Otis is a simple and opinionated long-form writing tool meant to serve the 0.0000000002% of the population that likes to write long-form text (book manuscripts, short stories, etc…) and prefers using simple text files + git for the actual manuscript.
+Otis is a simple and opinionated long-form writing tool meant to serve the 0.0000000002% of the population that likes to write long-form text (book manuscripts, short stories, etc…) and prefers using simple text files + git for the actual writing.
 
 Otis is a work in progress, and built for my own use. It was born out of my frustration with traditional writing tools like Word and Scrivener. These are very powerful in some ways (many of which I don't care much about). And they are very weak when it comes to revision tracking. Since I'm very comfortable in git, I decided to try doing my writing in git-friendly formats instead. I prefer to work this way, and otis is my tool to make this practicable. 
 
@@ -111,7 +111,9 @@ Here's an example of a work with several scenes:
     * `/01-this-is-not-love.md`
     * `/02-anna-begins-to-change-my-mind.md`
 
-When compiles, scenes are separated by a *scene break*, which in the standard manuscript format is `#` centered on a line by itself.
+When compiled, scenes are separated by a *scene break*, which in the standard manuscript format is `#` centered on a line by itself.
+
+> Note: While scenes are written in markdown, otis has very limited actual markdown support. When compiling to HTML otis uses a standard markdown processor. But when compiling to other formats, otis processes the markdown itself, and currrently only supports `*emphasis*` and `> blockquotes`. All other markdown will be copied to the output unchanged.
 
 ### Manuscript Chapters
 
@@ -174,7 +176,7 @@ It has these properties:
 * `title` the title of the chapter, displayed at the top fo the first page of the chapter
 * `numbered` (optional, defaults to `true`) when true, otis will display, eg, `Chapter 1` above the chapter title. 
 
-> Note: You can mix numbered and un-numbered chapters. For instance, you may have an unnumbered "Epilogue", "introduction", etc…, then a series of numbered chapters, and then an unnumbered "Afterword". 
+> Note: You can mix numbered and un-numbered chapters. For instance, you may have an unnumbered "Epilogue", "Introduction", etc…, then a series of numbered chapters, and then an unnumbered "Afterword". 
 
 ## The `otis` Command
 
@@ -231,7 +233,7 @@ $ otis wordcount --chapter
 
 ### Compiling
 
-While some people (maybe just me) find *writing* in simple text files and using git for revision management, branching, etc…, these are not suitable formats for sharing your work with others. Otis can *compile* your manuscript into standard readable forms.
+While some people (maybe just me) find *writing* in simple text files and using git for revision management, branching, etc… a breath of fresh air, these are not suitable formats for sharing your work with others. Otis can *compile* your manuscript into standard readable forms.
 
 ```shell
 $ otis compile
@@ -243,8 +245,12 @@ It supports four output formats:
 
 * `PDF` (default) a pdf in standard manuscript format
 * `HTML` a single page HTML file that mimics standard manuscript format
-* `RTF` a rich text file that can be opened in Microsoft Work, LibreOffice, Pages for macOS, etc… It follows standard manuscript format.
+* `RTF` a rich text file that can be opened in Microsoft Word, LibreOffice, Pages for macOS, etc… It follows standard manuscript format.
 * `TEX` a LaTeX document (this is the source file for the PDF version, but you can produce this directly if it is useful to you).
+
+> PDF Note: The pdf output is produced by compiling to LaTeX and then processing the `.tex` file with the `pdflatex` command. You need a LaTeX installation (with `pdflatex` in your path) for this to work.
+
+> RTF Note: When opening in Pages for macOS, the RTF format does not currently include page headers. I haven't been able to find a way to make this work.
 
 You specify the format you want with the `--format` option:
 
