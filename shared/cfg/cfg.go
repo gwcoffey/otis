@@ -14,19 +14,19 @@ type Author struct {
 }
 
 type Config struct {
-	Author  Author `yaml:"author"`
-	Address string `yaml:"address"`
+	ProjectRoot string
+	Author      Author `yaml:"author"`
+	Address     string `yaml:"address"`
 }
 
-func ProjectPath() (path string, err error) {
-	dir, err := os.Getwd()
+func FindProjectRoot() (path string, err error) {
+	path, err = os.Getwd()
 	if err != nil {
 		return
 	}
 
-	for ; dir != filepath.Dir(dir); dir = filepath.Dir(dir) {
-		path := filepath.Join(dir, "otis.yml")
-		_, err = os.Stat(path)
+	for ; path != filepath.Dir(path); path = filepath.Dir(path) {
+		_, err = os.Stat(filepath.Join(path, "otis.yml"))
 		if err == nil || !os.IsNotExist(err) {
 			return
 		}
@@ -36,17 +36,30 @@ func ProjectPath() (path string, err error) {
 	return
 }
 
-func FindAndLoad() (cfg Config, err error) {
-	projectPath, err := ProjectPath()
-	if err != nil {
-		return
-	}
-
+func Load(projectPath string) (config Config, err error) {
 	cfgYaml, err := os.ReadFile(filepath.Join(projectPath, "otis.yml"))
 	if err != nil {
 		return
 	}
 
-	err = yaml.Unmarshal(cfgYaml, &cfg)
+	config.ProjectRoot = projectPath
+
+	err = yaml.Unmarshal(cfgYaml, &config)
+	return
+}
+
+// TmpDir returns the path to the temporary directory for build artifacts, creating it if necessary
+func (c *Config) TmpDir() (path string, err error) {
+	path = filepath.Join(c.ProjectRoot, ".build")
+	// make sure it exists
+	err = os.MkdirAll(path, os.ModePerm)
+	return
+}
+
+// DistDir returns the path to the distribution directory, creating it if necessary
+func (c *Config) DistDir() (path string, err error) {
+	path = filepath.Join(c.ProjectRoot, "dist")
+	// make sure it exists
+	err = os.MkdirAll(path, os.ModePerm)
 	return
 }

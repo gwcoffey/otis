@@ -6,7 +6,16 @@ import (
 	"strings"
 )
 
-var escapes = strings.NewReplacer(
+var optionalCommandEscapes = strings.NewReplacer(
+	"]", "{]}",
+	",", "{,}",
+	"\n", "\\\\\n")
+
+var requiredCommandEscapes = strings.NewReplacer(
+	",", "{,}",
+	"\n", "\\\\\n")
+
+var textEscapes = strings.NewReplacer(
 	`#`, `\#`,
 	`$`, `\$`,
 	`%`, `\%`,
@@ -19,15 +28,24 @@ var escapes = strings.NewReplacer(
 	`}`, `\}`,
 )
 
-var sceneBreakPattern = regexp.MustCompile(`(?m)\s*^\s*\*\*\*\s*$\s*`)
-var emphasisPattern = regexp.MustCompile(`\*(.+)\*`)
+var emphasisPattern = regexp.MustCompile(`\*(.+?)\*`)
 var blockquotePattern = regexp.MustCompile(`^>.*(?:\n>.*)*`)
 var blockquoteCleanerPattern = regexp.MustCompile(`^>\s+`)
 
-// Escape escapes characters that would otherwise be interpreted by latex, making the
+// EscapeOptionalArg textEscapes text for an argument to a command
+func EscapeOptionalArg(text string) string {
+	return optionalCommandEscapes.Replace(text)
+}
+
+// EscapeRequiredArg textEscapes text for an argument to a command
+func EscapeRequiredArg(text string) string {
+	return requiredCommandEscapes.Replace(text)
+}
+
+// EscapeText textEscapes characters that would otherwise be interpreted by latex, making the
 // value safe to insert into a latex file as content.
-func Escape(text string) string {
-	return escapes.Replace(text)
+func EscapeText(text string) string {
+	return textEscapes.Replace(text)
 }
 
 func EscapeNewlines(text string) string {
@@ -39,9 +57,7 @@ func EscapeNewlines(text string) string {
 //
 //	*emphasis* 		-> \emph
 //	> blockquotes 	-> \begin{quotation}...\end{quotation}
-//	***				-> \newscene
 func FormatMarkdown(text string) string {
-	text = sceneBreakPattern.ReplaceAllString(text, "\n\n\\newscene\n\n")
 	text = emphasisPattern.ReplaceAllString(text, `\emph{$1}`)
 	text = blockquotePattern.ReplaceAllStringFunc(text, func(match string) string {
 		clean := blockquoteCleanerPattern.ReplaceAllString(match, "")

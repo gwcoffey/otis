@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+<meta charset="utf-8">
+<title>{{ .Work.Title }}</title>
+<style>
+    :root {
+        --margin: 1in;
+        counter-reset: chapter;
+    }
+    * {
+        font-family: courier;
+        font-size: 12pt;
+        font-style: normal;
+        font-weight: normal;
+        line-height: 2;
+    }
+    html {
+        margin: var(--margin);
+    }
+    body {
+        max-width: 8.5in;
+        margin: 0 auto;
+        position: relative;
+        border: 1px solid transparent;
+    }
+    h1 {
+        text-align: center;
+        text-transform: uppercase;
+        margin: calc(3*var(--margin)) 0 0 0;
+    }
+    address.by {
+        text-align: center;
+    }
+    address.contact {
+        position: absolute;
+        top: 0;
+        left: 0;
+        line-height: 1;
+    }
+    #word-count {
+        position: absolute;
+        top: 0;
+        right: 0;
+    }
+    section.content {
+        text-indent: calc(0.5*var(--margin));
+    }
+    h2 {
+        margin: calc(2*var(--margin)) 0 calc(0.5*var(--margin)) 0;
+        text-align: center;
+        text-indent: 0;
+    }
+    h2.numbered::before {
+        counter-increment: chapter;
+        content: "Chapter " counter(chapter);
+        display: block;
+    }
+    hr {
+        border: none;
+        height: 1li;
+        text-align: center;
+    }
+    hr::before {
+        content: "#";
+    }
+    hr.end::before {
+        content: "# # # # #"
+    }
+</style>
+</head>
+<body>
+    <section id="title-page">
+        <h1>{{ .Work.Title }}</h1>
+        <address class="by">by {{ .Config.Author.Name }}</address>
+
+        <address class="contact">
+            {{ with .Config.Author.RealName }}{{ . }}{{ else }}{{ .Config.Author.Name }}<br>{{ end }}
+            {{ .Config.Address | breaks }}
+        </address>
+
+        <span id="word-count">{{ .WordCount }} words</span>
+    </section>
+
+    {{ if gt (.Work.Chapters | len) 0 -}}
+        {{- range $index, $chapter := .Work.Chapters }}
+            <section class="content">
+            {{- with $chapter.Number }}
+                <h2 class="numbered">{{ $chapter.Title }}</h2>
+            {{- else -}}
+                <h2 class="unnumbered">{{ $chapter.Title }}</h2>
+            {{ end -}}
+            {{- range $index, $scene := $chapter.Scenes -}}
+                {{ if gt $index 0 }}
+                    <hr>
+                {{ end }}
+                {{ $scene.Text | markdown }}
+            {{ end }}
+            </section>
+        {{ end -}}
+    {{- else -}}
+        <section class="content">
+        {{- range $index, $scene := .Work.Scenes -}}
+            {{ if gt $index 0 }}
+                <hr>
+            {{ end }}
+            {{ $scene.Text | markdown }}
+        {{ end }}
+        </section>
+    {{- end }}
+
+    <hr class="end">
+
+</body>

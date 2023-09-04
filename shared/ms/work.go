@@ -1,6 +1,12 @@
 package ms
 
-import "fmt"
+import (
+	"fmt"
+	"golang.org/x/text/language"
+	"golang.org/x/text/message"
+	"math"
+	"strings"
+)
 
 type work struct {
 	node       *node
@@ -18,6 +24,8 @@ type Work interface {
 	Author() string
 	AuthorSurname() string
 	Chapters() []Chapter
+	WordCount() (int, error)
+	MsWordCount() (string, error)
 }
 
 func (w *work) String() string {
@@ -91,4 +99,29 @@ func (w *work) Chapters() (chapters []Chapter) {
 
 func (w *work) Folders() []Folder {
 	return w.node.folders()
+}
+
+func (w *work) WordCount() (count int, err error) {
+	for _, scene := range w.AllScenes() {
+		var text string
+		text, err = scene.Text()
+		if err != nil {
+			return
+		}
+		count += len(strings.Fields(text))
+	}
+	return
+}
+
+func (w *work) MsWordCount() (result string, err error) {
+	count, err := w.WordCount()
+	if err != nil {
+		return
+	}
+
+	count = int(math.Round(float64(count)/500.0)) * 500
+
+	p := message.NewPrinter(language.English)
+	result = p.Sprintf("%d", count)
+	return
 }

@@ -16,11 +16,11 @@ var args struct {
 	Compile     *compile.Args   `arg:"subcommand:compile"`
 }
 
-func getMsPath() (msPath string, err error) {
+func getProjectRoot() (msPath string, err error) {
 	if args.ProjectPath != nil {
 		return *args.ProjectPath, nil
 	} else {
-		return cfg.ProjectPath()
+		return cfg.FindProjectRoot()
 	}
 }
 
@@ -30,7 +30,12 @@ func main() {
 		p.Fail("missing subcommand")
 	}
 
-	projectPath, err := getMsPath()
+	projectPath, err := getProjectRoot()
+	if err != nil {
+		panic(err)
+	}
+
+	config, err := cfg.Load(projectPath)
 	if err != nil {
 		panic(err)
 	}
@@ -39,9 +44,9 @@ func main() {
 	case args.Echo != nil:
 		echo.Echo(args.Echo)
 	case args.WordCount != nil:
-		wordcount.WordCount(projectPath, args.WordCount)
+		wordcount.WordCount(config, args.WordCount)
 	case args.Compile != nil:
-		compile.Compile(projectPath, args.Compile)
+		compile.Compile(config, args.Compile)
 	default:
 		panic(fmt.Sprintf("unexpected and unhandled command"))
 	}

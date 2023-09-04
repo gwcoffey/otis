@@ -26,7 +26,7 @@ func TestCommandEscapes(t *testing.T) {
 }
 
 func expectEscape(t *testing.T, unescaped string, expected string) {
-	it := Escape(unescaped)
+	it := EscapeText(unescaped)
 	if it != expected {
 		t.Fatal("expected", it, "to equal", expected)
 	}
@@ -37,12 +37,11 @@ func TestFormatMarkdown(t *testing.T) {
 	expectFormat(t, `this *is* neat`, `this \emph{is} neat`)
 	expectFormat(t, `*this is neat*`, `\emph{this is neat}`)
 	expectFormat(t, `> a blockquote`, "\\begin{quotation}\na blockquote\n\\end{quotation}\n")
-	expectFormat(t, "this\n***\nthat", "this\n\n\\newscene\n\nthat")
 }
 
 func expectFormat(t *testing.T, unformatted string, expected string) {
 	it := FormatMarkdown(unformatted)
 	if it != expected {
-		t.Fatal("expected", it, "to equal", expected)
+		t.Error("expected", it, "to equal", expected)
 	}
 }
