@@ -17,7 +17,7 @@ const indentSize = "  "
 
 type Args struct {
 	Work      *string `arg:"positional" help:"count only the specified work in a multi-work manuscript"`
-	ByChapter bool    `arg:"--chapter" help:"count by chapter rather than by folder"`
+	ByChapter bool    `arg:"--chapter,-c" help:"count by chapter rather than by folder"`
 }
 
 type printBy int
