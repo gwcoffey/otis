@@ -1,3 +1,5 @@
+# Otis
+
 Otis is a simple and opinionated long-form writing tool meant to serve the 0.0000000002% of the population that likes to write long-form text (book manuscripts, short stories, etc…) and prefers using simple text files + git for the actual manuscript.
 
 Otis is a work in progress, and built for my own use. It was born out of my frustration with traditional writing tools like Word and Scrivener. These are very powerful in some ways (many of which I don't care much about). And they are very weak when it comes to revision tracking. Since I'm very comfortable in git, I decided to try doing my writing in git-friendly formats instead. I prefer to work this way, and otis is my tool to make this practicable. 
