@@ -124,7 +124,7 @@ func generateHtml(fileName string, config cfg.Config, work ms.Work) (err error) 
 		}
 	}()
 
-	htmlContent, err := html.WorkToHtml(path, config, work)
+	htmlContent, err := html.WorkToHtml(config, work)
 	if err != nil {
 		return
 	}
@@ -161,11 +161,11 @@ func generateRtf(fileName string, config cfg.Config, work ms.Work) (err error) {
 		}
 	}()
 
-	rtf, err := rtf.WorkToRtf(work, config)
+	rtfContent, err := rtf.WorkToRtf(work, config)
 	if err != nil {
 		return
 	}
-	_, err = w.WriteString(rtf)
+	_, err = w.WriteString(rtfContent)
 	if err != nil {
 		return
 	}

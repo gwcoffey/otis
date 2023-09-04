@@ -1,8 +1,6 @@
-package latex
+package tex
 
-import (
-	"testing"
-)
+import "testing"
 
 func TestNoEscapes(t *testing.T) {
 	expectEscape(t, `clean`, `clean`)
@@ -26,7 +24,7 @@ func TestCommandEscapes(t *testing.T) {
 }
 
 func expectEscape(t *testing.T, unescaped string, expected string) {
-	it := EscapeText(unescaped)
+	it := escapeText(unescaped)
 	if it != expected {
 		t.Fatal("expected", it, "to equal", expected)
 	}
@@ -40,8 +38,30 @@ func TestFormatMarkdown(t *testing.T) {
 }
 
 func expectFormat(t *testing.T, unformatted string, expected string) {
-	it := FormatMarkdown(unformatted)
+	it := formatMarkdown(unformatted)
 	if it != expected {
 		t.Error("expected", it, "to equal", expected)
+	}
+}
+
+func TestCommand(t *testing.T) {
+	expectCommand(t, `\foo`, command("foo", nil, nil))
+	expectCommand(t, `\foo[a]`, command("foo", []string{"a"}, nil))
+	expectCommand(t, `\foo[aaa,bbb]`, command("foo", []string{"aaa", "bbb"}, nil))
+	expectCommand(t, `\foo{a}`, command("foo", nil, []string{"a"}))
+	expectCommand(t, `\foo{aaa,bbb}`, command("foo", nil, []string{"aaa", "bbb"}))
+	expectCommand(t, `\foo[a]{b}`, command("foo", []string{"a"}, []string{"b"}))
+	expectCommand(t, `\foo[aaa,bbb]{ccc,ddd}`, command("foo", []string{"aaa", "bbb"}, []string{"ccc", "ddd"}))
+
+	expectCommand(t, `\foo[a{,}b,c]`, command("foo", []string{"a,b", "c"}, nil))
+	expectCommand(t, `\foo[a{]}b]`, command("foo", []string{"a]b"}, nil))
+	expectCommand(t, `\foo[a[b{]}c]`, command("foo", []string{"a[b]c"}, nil))
+
+	expectCommand(t, `\foo{a{,}b,c}`, command("foo", nil, []string{"a,b", "c"}))
+}
+
+func expectCommand(t *testing.T, expected string, actual string) {
+	if actual != expected {
+		t.Error("expected", actual, "to equal", expected)
 	}
 }

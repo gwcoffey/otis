@@ -42,7 +42,7 @@ func loadTemplate() (tmpl *template.Template, err error) {
 	return
 }
 
-func WorkToHtml(path string, config cfg.Config, work ms.Work) (html string, err error) {
+func WorkToHtml(config cfg.Config, work ms.Work) (html string, err error) {
 	htemplate, err := loadTemplate()
 	out := strings.Builder{}
 

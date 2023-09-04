@@ -7,7 +7,11 @@ import (
 	"strings"
 )
 
-func escapeText(text string) string {
+// toRtfText prepares text for insertion into RTF; it:
+// - reduces consecutive newlines to a single newline and escapes it
+// - converts *emphasis* to underlines
+// - escapes non-7bit-ascii characters,
+func toRtfText(text string) string {
 	builder := strings.Builder{}
 	inNewline := false
 	inEmphasis := false
@@ -42,6 +46,7 @@ func escapeText(text string) string {
 	return builder.String()
 }
 
+// writeScene writes a scene break (if needed) and then the scene itself
 func writeScene(scidx int, scene ms.Scene, out *strings.Builder) (err error) {
 	var text string
 	if scidx > 0 {
@@ -54,7 +59,7 @@ func writeScene(scidx int, scene ms.Scene, out *strings.Builder) (err error) {
 	if err != nil {
 		return
 	}
-	out.WriteString(escapeText(text))
+	out.WriteString(toRtfText(text))
 	out.WriteString(`\par}`)
 	out.WriteString("\n")
 	return
