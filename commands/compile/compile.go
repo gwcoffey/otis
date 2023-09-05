@@ -42,8 +42,8 @@ func selectWork(args *Args, manuscript ms.Manuscript) ms.Work {
 	return work
 }
 
-func generateTex(fileName string, config o.Otis, work ms.Work) (err error) {
-	outDir, err := config.DistDir()
+func generateTex(fileName string, otis o.Otis, work ms.Work) (err error) {
+	outDir, err := otis.DistDir()
 	if err != nil {
 		return
 	}
@@ -54,16 +54,16 @@ func generateTex(fileName string, config o.Otis, work ms.Work) (err error) {
 		return
 	}
 
-	return writeTex(path, config, work)
+	return writeTex(path, otis, work)
 }
 
-func generatePdf(fileName string, config o.Otis, work ms.Work) (err error) {
-	tmpDir, err := config.TmpDir()
+func generatePdf(fileName string, otis o.Otis, work ms.Work) (err error) {
+	tmpDir, err := otis.TmpDir()
 	if err != nil {
 		return
 	}
 
-	distDir, err := config.DistDir()
+	distDir, err := otis.DistDir()
 	if err != nil {
 		return
 	}
@@ -86,12 +86,12 @@ func generatePdf(fileName string, config o.Otis, work ms.Work) (err error) {
 		return
 	}
 
-	err = writeTex(texPath, config, work)
+	err = writeTex(texPath, otis, work)
 	if err != nil {
 		return
 	}
 
-	err = execPdfLatex(texPath, config)
+	err = execPdfLatex(texPath, otis)
 	if err != nil {
 		return
 	}
@@ -100,8 +100,8 @@ func generatePdf(fileName string, config o.Otis, work ms.Work) (err error) {
 	return
 }
 
-func generateHtml(fileName string, config o.Otis, work ms.Work) (err error) {
-	outDir, err := config.DistDir()
+func generateHtml(fileName string, otis o.Otis, work ms.Work) (err error) {
+	outDir, err := otis.DistDir()
 	if err != nil {
 		return
 	}
@@ -124,7 +124,7 @@ func generateHtml(fileName string, config o.Otis, work ms.Work) (err error) {
 		}
 	}()
 
-	htmlContent, err := html.WorkToHtml(config, work)
+	htmlContent, err := html.WorkToHtml(otis, work)
 	if err != nil {
 		return
 	}
@@ -137,8 +137,8 @@ func generateHtml(fileName string, config o.Otis, work ms.Work) (err error) {
 	return
 }
 
-func generateRtf(fileName string, config o.Otis, work ms.Work) (err error) {
-	outDir, err := config.DistDir()
+func generateRtf(fileName string, otis o.Otis, work ms.Work) (err error) {
+	outDir, err := otis.DistDir()
 	if err != nil {
 		return
 	}
@@ -161,7 +161,7 @@ func generateRtf(fileName string, config o.Otis, work ms.Work) (err error) {
 		}
 	}()
 
-	rtfContent, err := rtf.WorkToRtf(work, config)
+	rtfContent, err := rtf.WorkToRtf(work, otis)
 	if err != nil {
 		return
 	}
@@ -174,8 +174,8 @@ func generateRtf(fileName string, config o.Otis, work ms.Work) (err error) {
 	return
 }
 
-func execPdfLatex(texPath string, config o.Otis) (err error) {
-	tmpDir, err := config.TmpDir()
+func execPdfLatex(texPath string, otis o.Otis) (err error) {
+	tmpDir, err := otis.TmpDir()
 	if err != nil {
 		return
 	}
@@ -193,7 +193,7 @@ func execPdfLatex(texPath string, config o.Otis) (err error) {
 	return
 }
 
-func writeTex(path string, config o.Otis, work ms.Work) (err error) {
+func writeTex(path string, otis o.Otis, work ms.Work) (err error) {
 	file, err := os.Create(path)
 	if err != nil {
 		return
@@ -206,7 +206,7 @@ func writeTex(path string, config o.Otis, work ms.Work) (err error) {
 		}
 	}()
 
-	latex, err := tex.WorkToTex(work, config)
+	latex, err := tex.WorkToTex(work, otis)
 	if err != nil {
 		return
 	}
