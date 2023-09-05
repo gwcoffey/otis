@@ -2,8 +2,8 @@ package tex
 
 import (
 	_ "embed"
-	"gwcoffey/otis/shared/cfg"
 	"gwcoffey/otis/shared/ms"
+	"gwcoffey/otis/shared/o"
 	"strings"
 )
 
@@ -22,20 +22,20 @@ func writeScene(scidx int, scene ms.Scene, out *strings.Builder) (err error) {
 	return
 }
 
-func WorkToTex(work ms.Work, config cfg.Config) (tex string, err error) {
+func WorkToTex(work ms.Work, otis o.Otis) (tex string, err error) {
 
 	out := strings.Builder{}
 	out.WriteString(command("documentclass", []string{"novel", "courier"}, []string{"sffms"}))
 	out.WriteString(command("frenchspacing", nil, nil))
-	out.WriteString(command("author", nil, []string{config.Author.Name}))
+	out.WriteString(command("author", nil, []string{otis.AuthorName()}))
 
-	if name := config.Author.RealName; name != nil {
+	if name := otis.AuthorRealName(); name != nil {
 		out.WriteString(command("authorname", nil, []string{*name}))
 	}
-	if name := config.Author.Surname; name != nil {
+	if name := otis.AuthorSurname(); name != nil {
 		out.WriteString(command("surname", nil, []string{*name}))
 	}
-	out.WriteString(command("address", nil, []string{config.Address}))
+	out.WriteString(command("address", nil, []string{otis.Address()}))
 
 	out.WriteString(command("title", nil, []string{work.Title()}))
 	out.WriteString(command("runningtitle", nil, []string{work.RunningTitle()}))

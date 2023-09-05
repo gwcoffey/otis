@@ -190,7 +190,7 @@ The otis command line tool helps you work with your manuscript. You can:
 All these are available via the `otis` command. To get started, ask otis for help:
 
 ```shell
-$ otis -h
+$ o -h
 ```
 
 The command expects to be run from within a project directory (which it identified by searching up the directory structure for the nearest `otis.yml`).
@@ -214,7 +214,7 @@ TODO
 Otis can count the words in your manuscript:
 
 ```shell
-$ otis wordcount
+$ o wordcount
 ```
 
 This will show the wordcount for every scene in the manuscript, along with subtotals at the folder level and totals at the work level. 
@@ -222,13 +222,13 @@ This will show the wordcount for every scene in the manuscript, along with subto
 You can target a single work by naming it as an argument:
 
 ```shell
-$ otis wordcount 00-book-1
+$ o wordcount 00-book-1
 ```
 
 And you can get your counts by *chapter* instead of *scene*/*folder* with `--chapter`:
 
 ```shell
-$ otis wordcount --chapter
+$ o wordcount --chapter
 ```
 
 ### Compiling
@@ -236,7 +236,7 @@ $ otis wordcount --chapter
 While some people (maybe just me) find *writing* in simple text files and using git for revision management, branching, etc… a breath of fresh air, these are not suitable formats for sharing your work with others. Otis can *compile* your manuscript into standard readable forms.
 
 ```shell
-$ otis compile
+$ o compile
 ```
 
 This puts the compiled file in `/dist` within the project folder. By default, it is named `{title}_{date}.{format}`.  
@@ -255,13 +255,13 @@ It supports four output formats:
 You specify the format you want with the `--format` option:
 
 ```shell
-$ otis compile --format RTF
+$ o compile --format RTF
 ```
 
 Normally otis names the output file with the current date appended to the end. But you can change this with the `--tag` switch.
 
 ```shell
-$ otis compile --tag "draft1"
+$ o compile --tag "draft1"
 ```
 
 The output file name will still be based on the title of the work, but it will have the tag name appended instead of the date. 

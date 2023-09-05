@@ -4,11 +4,11 @@ import (
 	"bufio"
 	_ "embed"
 	"fmt"
-	"gwcoffey/otis/shared/cfg"
 	"gwcoffey/otis/shared/ms"
 	"gwcoffey/otis/shared/ms/compile/html"
 	"gwcoffey/otis/shared/ms/compile/rtf"
 	"gwcoffey/otis/shared/ms/compile/tex"
+	"gwcoffey/otis/shared/o"
 	"gwcoffey/otis/shared/text"
 	"os"
 	"os/exec"
@@ -42,7 +42,7 @@ func selectWork(args *Args, manuscript ms.Manuscript) ms.Work {
 	return work
 }
 
-func generateTex(fileName string, config cfg.Config, work ms.Work) (err error) {
+func generateTex(fileName string, config o.Otis, work ms.Work) (err error) {
 	outDir, err := config.DistDir()
 	if err != nil {
 		return
@@ -57,7 +57,7 @@ func generateTex(fileName string, config cfg.Config, work ms.Work) (err error) {
 	return writeTex(path, config, work)
 }
 
-func generatePdf(fileName string, config cfg.Config, work ms.Work) (err error) {
+func generatePdf(fileName string, config o.Otis, work ms.Work) (err error) {
 	tmpDir, err := config.TmpDir()
 	if err != nil {
 		return
@@ -100,7 +100,7 @@ func generatePdf(fileName string, config cfg.Config, work ms.Work) (err error) {
 	return
 }
 
-func generateHtml(fileName string, config cfg.Config, work ms.Work) (err error) {
+func generateHtml(fileName string, config o.Otis, work ms.Work) (err error) {
 	outDir, err := config.DistDir()
 	if err != nil {
 		return
@@ -137,7 +137,7 @@ func generateHtml(fileName string, config cfg.Config, work ms.Work) (err error) 
 	return
 }
 
-func generateRtf(fileName string, config cfg.Config, work ms.Work) (err error) {
+func generateRtf(fileName string, config o.Otis, work ms.Work) (err error) {
 	outDir, err := config.DistDir()
 	if err != nil {
 		return
@@ -174,7 +174,7 @@ func generateRtf(fileName string, config cfg.Config, work ms.Work) (err error) {
 	return
 }
 
-func execPdfLatex(texPath string, config cfg.Config) (err error) {
+func execPdfLatex(texPath string, config o.Otis) (err error) {
 	tmpDir, err := config.TmpDir()
 	if err != nil {
 		return
@@ -193,7 +193,7 @@ func execPdfLatex(texPath string, config cfg.Config) (err error) {
 	return
 }
 
-func writeTex(path string, config cfg.Config, work ms.Work) (err error) {
+func writeTex(path string, config o.Otis, work ms.Work) (err error) {
 	file, err := os.Create(path)
 	if err != nil {
 		return
@@ -219,8 +219,8 @@ func writeTex(path string, config cfg.Config, work ms.Work) (err error) {
 	return
 }
 
-func Compile(config cfg.Config, args *Args) {
-	manuscript, err := ms.Load(filepath.Join(config.ProjectRoot, "manuscript"))
+func Compile(otis o.Otis, args *Args) {
+	manuscript, err := otis.Manuscript()
 	if err != nil {
 		panic(err)
 	}
@@ -236,13 +236,13 @@ func Compile(config cfg.Config, args *Args) {
 
 	switch strings.ToUpper(args.Format) {
 	case "PDF":
-		err = generatePdf(fileName, config, work)
+		err = generatePdf(fileName, otis, work)
 	case "RTF":
-		err = generateRtf(fileName, config, work)
+		err = generateRtf(fileName, otis, work)
 	case "HTML":
-		err = generateHtml(fileName, config, work)
+		err = generateHtml(fileName, otis, work)
 	case "TEX":
-		err = generateTex(fileName, config, work)
+		err = generateTex(fileName, otis, work)
 	}
 	if err != nil {
 		panic(err)

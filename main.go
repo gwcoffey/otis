@@ -6,7 +6,7 @@ import (
 	"gwcoffey/otis/commands/compile"
 	"gwcoffey/otis/commands/echo"
 	"gwcoffey/otis/commands/wordcount"
-	"gwcoffey/otis/shared/cfg"
+	"gwcoffey/otis/shared/o"
 )
 
 var args struct {
@@ -20,7 +20,7 @@ func getProjectRoot() (msPath string, err error) {
 	if args.ProjectPath != nil {
 		return *args.ProjectPath, nil
 	} else {
-		return cfg.FindProjectRoot()
+		return o.FindProjectRoot()
 	}
 }
 
@@ -35,7 +35,7 @@ func main() {
 		panic(err)
 	}
 
-	config, err := cfg.Load(projectPath)
+	otis, err := o.Load(projectPath)
 	if err != nil {
 		panic(err)
 	}
@@ -44,9 +44,9 @@ func main() {
 	case args.Echo != nil:
 		echo.Echo(args.Echo)
 	case args.WordCount != nil:
-		wordcount.WordCount(config, args.WordCount)
+		wordcount.WordCount(otis, args.WordCount)
 	case args.Compile != nil:
-		compile.Compile(config, args.Compile)
+		compile.Compile(otis, args.Compile)
 	default:
 		panic(fmt.Sprintf("unexpected and unhandled command"))
 	}

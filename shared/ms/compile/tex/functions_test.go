@@ -61,7 +61,7 @@ func TestCommand(t *testing.T) {
 }
 
 func expectCommand(t *testing.T, expected string, actual string) {
-	if actual != expected {
+	if actual != expected+"\n" {
 		t.Error("expected", actual, "to equal", expected)
 	}
 }

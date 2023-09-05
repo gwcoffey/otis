@@ -5,15 +5,15 @@ import (
 	"github.com/gomarkdown/markdown"
 	"github.com/gomarkdown/markdown/html"
 	"github.com/gomarkdown/markdown/parser"
-	"gwcoffey/otis/shared/cfg"
 	"gwcoffey/otis/shared/ms"
+	"gwcoffey/otis/shared/o"
 	"html/template"
 	"strings"
 )
 
 type templateData struct {
 	Work      ms.Work
-	Config    cfg.Config
+	Config    o.Otis
 	WordCount string
 }
 
@@ -42,7 +42,7 @@ func loadTemplate() (tmpl *template.Template, err error) {
 	return
 }
 
-func WorkToHtml(config cfg.Config, work ms.Work) (html string, err error) {
+func WorkToHtml(config o.Otis, work ms.Work) (html string, err error) {
 	htemplate, err := loadTemplate()
 	out := strings.Builder{}
 

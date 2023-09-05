@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
-	"gwcoffey/otis/shared/cfg"
 	"gwcoffey/otis/shared/ms"
+	"gwcoffey/otis/shared/o"
 	"path/filepath"
 	"strings"
 	"unicode/utf8"
@@ -195,11 +195,11 @@ func selectWorks(args *Args, manuscript ms.Manuscript) (works []ms.Work, err err
 	return
 }
 
-func WordCount(config cfg.Config, args *Args) {
+func WordCount(otis o.Otis, args *Args) {
 	var manuscript ms.Manuscript
 	var err error
 
-	manuscript, err = ms.Load(filepath.Join(config.ProjectRoot, "manuscript"))
+	manuscript, err = otis.Manuscript()
 	if err != nil {
 		panic(err)
 	}

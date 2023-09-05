@@ -2,8 +2,8 @@ package rtf
 
 import (
 	"fmt"
-	"gwcoffey/otis/shared/cfg"
 	"gwcoffey/otis/shared/ms"
+	"gwcoffey/otis/shared/o"
 	"strings"
 )
 
@@ -65,7 +65,7 @@ func writeScene(scidx int, scene ms.Scene, out *strings.Builder) (err error) {
 	return
 }
 
-func WorkToRtf(work ms.Work, config cfg.Config) (rtf string, err error) {
+func WorkToRtf(work ms.Work, otis o.Otis) (rtf string, err error) {
 	wcount, err := work.MsWordCount()
 	if err != nil {
 		return
@@ -85,17 +85,17 @@ func WorkToRtf(work ms.Work, config cfg.Config) (rtf string, err error) {
 	out.WriteString(`\pard\tqr\tx9360`)
 
 	// output author name and wordcount
-	if name := config.Author.RealName; name != nil {
-		out.WriteString(*config.Author.RealName)
+	if name := otis.AuthorRealName(); name != nil {
+		out.WriteString(*otis.AuthorRealName())
 	} else {
-		out.WriteString(config.Author.Name)
+		out.WriteString(otis.AuthorName())
 	}
 	out.WriteString("\t")
 	out.WriteString(wcount + " words\\\n")
 
 	// paragraph with address lines
 	out.WriteString("\\pard\n")
-	out.WriteString(strings.ReplaceAll(config.Address, "\n", "\\\n"))
+	out.WriteString(strings.ReplaceAll(otis.Address(), "\n", "\\\n"))
 	out.WriteString("\\\n")
 
 	// paragraph double-spaced and centered
@@ -104,15 +104,15 @@ func WorkToRtf(work ms.Work, config cfg.Config) (rtf string, err error) {
 	// output title and byline
 	out.WriteString("\\\n\\\n\\\n\\\n\\\n\\\n\\\n\\\n" + strings.ToUpper(work.Title()))
 	out.WriteString("\\\n")
-	out.WriteString("By " + config.Author.Name)
+	out.WriteString("By " + otis.AuthorName())
 
 	// start a new section with header
 	out.WriteString(`\sect\sectd\sbknone\page`)
 	out.WriteString(`{\header\pard\f0\fs24\qr `)
-	if config.Author.Surname != nil {
-		out.WriteString(*config.Author.Surname)
+	if otis.AuthorSurname() != nil {
+		out.WriteString(*otis.AuthorSurname())
 	} else {
-		out.WriteString(config.Author.Name)
+		out.WriteString(otis.AuthorName())
 	}
 	out.WriteString(" / ")
 	out.WriteString(strings.ToUpper(work.RunningTitle()))
