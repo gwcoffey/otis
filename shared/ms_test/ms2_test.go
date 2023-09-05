@@ -8,7 +8,7 @@ import (
 )
 
 func exPath(name string) string {
-	return filepath.Join("../../test-data/projects", name, "manuscript")
+	return filepath.Join("../../testdata/projects", name, "manuscript")
 }
 
 func TestLoadErrors(t *testing.T) {
