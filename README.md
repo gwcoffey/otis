@@ -182,6 +182,7 @@ It has these properties:
 
 The otis command line tool helps you work with your manuscript. You can:
 
+* initialize an otis project
 * create, move, and split scenes
 * add folders, chapters, etc…
 * count words by folder and scene, or by chapter
@@ -196,6 +197,24 @@ $ o -h
 The command expects to be run from within a project directory (which it identified by searching up the directory structure for the nearest `otis.yml`).
 
 > Note: If you really want to you can use `otis` on a project you're not *in* using the `--project` command line switch.
+
+### Initializing a New Project
+
+To start a new project, create an empty directory, switch to it, and run:
+
+```shell
+$ otis init
+```
+
+This will create the necessary configuration for a single-work project with one scene. You can edit the metadata files as needed, and add scenes.
+
+If you plan to create a multi-work project, use the `--works` option:
+
+```shell
+$ otis init --works 3
+```
+
+This version will create individual folders for each work with a work metadata file in each.
 
 ### Working with Scenes
 
