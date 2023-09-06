@@ -5,6 +5,7 @@ import (
 	"github.com/alexflint/go-arg"
 	"gwcoffey/otis/commands/compile"
 	"gwcoffey/otis/commands/echo"
+	"gwcoffey/otis/commands/initcmd"
 	"gwcoffey/otis/commands/wordcount"
 	"gwcoffey/otis/shared/o"
 )
@@ -14,6 +15,7 @@ var args struct {
 	Echo        *echo.Args      `arg:"subcommand:echo"`
 	WordCount   *wordcount.Args `arg:"subcommand:wordcount"`
 	Compile     *compile.Args   `arg:"subcommand:compile"`
+	Init        *initcmd.Args   `arg:"subcommand:init"`
 }
 
 func getProjectRoot() (msPath string, err error) {
@@ -24,12 +26,16 @@ func getProjectRoot() (msPath string, err error) {
 	}
 }
 
-func main() {
-	p := arg.MustParse(&args)
-	if p.Subcommand() == nil {
-		p.Fail("missing subcommand")
+func doInit() {
+	projectPath := "."
+	if args.ProjectPath != nil {
+		projectPath = *args.ProjectPath
 	}
 
+	initcmd.Init(projectPath, args.Init)
+}
+
+func doProjectCommand() {
 	projectPath, err := getProjectRoot()
 	if err != nil {
 		panic(err)
@@ -49,5 +55,19 @@ func main() {
 		compile.Compile(otis, args.Compile)
 	default:
 		panic(fmt.Sprintf("unexpected and unhandled command"))
+	}
+}
+
+func main() {
+	p := arg.MustParse(&args)
+	if p.Subcommand() == nil {
+		p.Fail("missing subcommand")
+	}
+
+	// init is the only command that doesn't need a project
+	if args.Init != nil {
+		doInit()
+	} else {
+		doProjectCommand()
 	}
 }

@@ -1,0 +1,18 @@
+# Author information
+author:
+
+  # Required: your name (appears on manuscript title pages)
+  name: Your Name
+
+  # Recommended: your surname / last name (appears in manuscript headers)
+  surname: Your Surname
+
+  # If needed: your real / legal name (appears in the address block)
+  realname: Your Real Name
+
+# Address / contact information (appears on manuscript title pages)
+address: |-
+  1234 My Street
+  Anytown, AZ 85000
+  555-555-1212
+  me@example.com

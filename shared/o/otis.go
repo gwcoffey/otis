@@ -1,9 +1,9 @@
 package o
 
 import (
-	"errors"
 	"github.com/go-yaml/yaml"
 	"gwcoffey/otis/shared/ms"
+	"gwcoffey/otis/shared/o/oerr"
 	"os"
 	"path/filepath"
 )
@@ -43,13 +43,13 @@ func FindProjectRoot() (path string, err error) {
 	}
 
 	for ; path != filepath.Dir(path); path = filepath.Dir(path) {
-		_, err = os.Stat(filepath.Join(path, "o.yml"))
+		_, err = os.Stat(filepath.Join(path, "otis.yml"))
 		if err == nil || !os.IsNotExist(err) {
 			return
 		}
 	}
 
-	err = errors.New("this is not an o project directory")
+	err = oerr.ProjectNotFound()
 	return
 }
 
