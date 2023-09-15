@@ -16,8 +16,8 @@ type work struct {
 type Work interface {
 	fmt.Stringer
 	FileSystemObject
-	Scener
-	Folderer
+	SceneContainer
+	FolderContainer
 	AllScenes() []Scene
 	Title() string
 	RunningTitle() string

@@ -16,12 +16,8 @@ type Scene interface {
 	Text() (string, error)
 }
 
-type Scener interface {
-	Scenes() []Scene
-}
-
 func (s *scene) String() string {
-	return fmt.Sprintf("Scene{%s} of %s", "", s.folder)
+	return fmt.Sprintf("Scene{number=%d, name=%s} of %s", s.Number(), s.PrettyFileName(), s.folder)
 }
 
 func (s *scene) Path() string {

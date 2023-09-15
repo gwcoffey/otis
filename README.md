@@ -218,7 +218,41 @@ This version will create individual folders for each work with a work metadata f
 
 ### Working with Scenes
 
-TODO
+```shell
+# add a scene to the end
+$ otis touch PATH NAME
+
+# add a scene inserted
+$ otis touch PATH NAME --at NEW_INDEX
+
+# move a scene in the same folder
+$ otis mv PATH --at NEW_INDEX
+
+# move a scene to another folder
+$ otis mv PATH PATH
+
+# move a scene to another folder and insert
+$ otis mv PATH PATH --at NEW_INDEX
+
+# split a scene (insert "###" in scene file first)
+$ otis split PATH
+
+# combine multiple scenes into one
+$ otis join PATH PATH...
+
+# normalize all scene/folder numbers
+$ otis normalize [--recursive] PATH
+
+# insert a chapter
+$ otis chapter PATH
+
+# show outline
+$ otis ls
+
+# show table of contents
+$ otis ls --chapter
+```
+ 
 
 ### Working with Folders
 

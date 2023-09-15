@@ -1,6 +1,10 @@
 package ms
 
-import "fmt"
+import (
+	"fmt"
+	"gwcoffey/otis/shared/o/oerr"
+	"strings"
+)
 
 type manuscript struct {
 	node *node
@@ -9,6 +13,7 @@ type manuscript struct {
 type Manuscript interface {
 	fmt.Stringer
 	Works() []Work
+	ResolveSceneContainer(path string) (SceneContainer, error)
 }
 
 func (m *manuscript) String() string {
@@ -27,6 +32,56 @@ func (m *manuscript) Works() (works []Work) {
 		if child.workMeta != nil {
 			works = append(works, &work{node: child, manuscript: m})
 		}
+	}
+
+	return
+}
+
+func walkFolder(folder Folder, fn func(Folder) bool) {
+	if fn(folder) {
+		return
+	}
+	for _, f := range folder.Folders() {
+		stop := fn(f)
+		if stop {
+			break
+		}
+		walkFolder(f, fn)
+	}
+}
+
+func (m *manuscript) ResolveSceneContainer(path string) (result SceneContainer, err error) {
+	var work Work
+	for _, w := range m.Works() {
+		if strings.HasPrefix(path, w.Path()) {
+			work = w
+			break
+		}
+	}
+
+	if work == nil {
+		err = oerr.FolderPathNotFound(path)
+		return
+	}
+
+	if work.Path() == path {
+		return work, nil
+	}
+
+	for _, folder := range work.Folders() {
+		walkFolder(folder, func(f Folder) bool {
+			if f.Path() == path {
+				result = f
+				return true
+			} else {
+				return false
+			}
+		})
+	}
+
+	if result == nil {
+		err = oerr.FolderPathNotFound(path)
+		return
 	}
 
 	return

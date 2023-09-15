@@ -10,7 +10,7 @@ type chapter struct {
 
 type Chapter interface {
 	fmt.Stringer
-	Scener
+	SceneContainer
 	Title() string
 	Number() *int
 }

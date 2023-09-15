@@ -46,6 +46,12 @@ var metaFilenames = map[string]bool{
 	"chapter.yml": true,
 }
 
+type FileSystemObject interface {
+	Path() string
+	Number() int
+	PrettyFileName() string
+}
+
 func (n *node) addWorkMeta(path string) (err error) {
 	content, err := os.ReadFile(filepath.Join(path, "work.yml"))
 	if errors.Is(err, fs.ErrNotExist) {

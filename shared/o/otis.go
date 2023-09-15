@@ -54,7 +54,7 @@ func FindProjectRoot() (path string, err error) {
 }
 
 func Load(projectPath string) (_ Otis, err error) {
-	otisYml, err := os.ReadFile(filepath.Join(projectPath, "o.yml"))
+	otisYml, err := os.ReadFile(filepath.Join(projectPath, "otis.yml"))
 	if err != nil {
 		return
 	}

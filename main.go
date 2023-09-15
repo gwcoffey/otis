@@ -6,16 +6,19 @@ import (
 	"gwcoffey/otis/commands/compile"
 	"gwcoffey/otis/commands/echo"
 	"gwcoffey/otis/commands/initcmd"
+	"gwcoffey/otis/commands/touch"
 	"gwcoffey/otis/commands/wordcount"
 	"gwcoffey/otis/shared/o"
 )
 
 var args struct {
-	ProjectPath *string         `arg:"--project" help:"path to the project directory (when not specified use current project)"`
-	Echo        *echo.Args      `arg:"subcommand:echo"`
-	WordCount   *wordcount.Args `arg:"subcommand:wordcount"`
-	Compile     *compile.Args   `arg:"subcommand:compile"`
-	Init        *initcmd.Args   `arg:"subcommand:init"`
+	ProjectPath *string `arg:"--project" help:"path to the project directory (when not specified use current project)"`
+
+	Init      *initcmd.Args   `arg:"subcommand:init"`
+	Echo      *echo.Args      `arg:"subcommand:echo"`
+	WordCount *wordcount.Args `arg:"subcommand:wordcount"`
+	Touch     *touch.Args     `arg:"subcommand:touch"`
+	Compile   *compile.Args   `arg:"subcommand:compile"`
 }
 
 func getProjectRoot() (msPath string, err error) {
@@ -53,6 +56,8 @@ func doProjectCommand() {
 		wordcount.WordCount(otis, args.WordCount)
 	case args.Compile != nil:
 		compile.Compile(otis, args.Compile)
+	case args.Touch != nil:
+		touch.Touch(otis, args.Touch)
 	default:
 		panic(fmt.Sprintf("unexpected and unhandled command"))
 	}

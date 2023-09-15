@@ -5,6 +5,10 @@ import (
 	"fmt"
 )
 
+type SceneContainer interface {
+	Scenes() []Scene
+}
+
 func validateManuscript(manuscript Manuscript) (err error) {
 	if len(manuscript.Works()) == 0 {
 		err = errors.New("manuscript has no works")

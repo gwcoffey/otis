@@ -27,7 +27,7 @@ func assertWorkMetadata(t *testing.T, work ms.Work, title string, runningTitle s
 	}
 }
 
-func assertSceneCount(t *testing.T, scener ms.Scener, expected int) {
+func assertSceneCount(t *testing.T, scener ms.SceneContainer, expected int) {
 	if actual := len(scener.Scenes()); expected != actual {
 		t.Fatalf("count of scenes in %s = %v; expected %v", scener, actual, expected)
 	}
@@ -75,7 +75,7 @@ func assertChapterMetadata(t *testing.T, chapter ms.Chapter, title string, numbe
 	}
 }
 
-func assertFolderCount(t *testing.T, folderer ms.Folderer, expected int) {
+func assertFolderCount(t *testing.T, folderer ms.FolderContainer, expected int) {
 	if actual := len(folderer.Folders()); expected != actual {
 		t.Fatalf("count of folders in work %s = %d; expected %d", folderer, actual, expected)
 	}
