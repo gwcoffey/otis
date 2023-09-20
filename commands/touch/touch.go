@@ -7,7 +7,6 @@ import (
 	"gwcoffey/otis/shared/text"
 	"os"
 	"path/filepath"
-	"regexp"
 )
 
 type Args struct {
@@ -16,52 +15,14 @@ type Args struct {
 	At   *int   `arg:"--at,-a" help:"the scene number at which to insert"`
 }
 
-func findNextSceneNumber(f ms.SceneContainer) int {
-	sceneNumber := 0
-	for _, scene := range f.Scenes() {
-		if sceneNumber <= scene.Number() {
-			sceneNumber = scene.Number() + 1
-		}
-	}
-	return sceneNumber
-}
-
 func targetSceneNumber(args *Args, sceneContainer ms.SceneContainer) int {
 	var sceneNumber int
 	if args.At != nil {
 		sceneNumber = *args.At
 	} else {
-		sceneNumber = findNextSceneNumber(sceneContainer)
+		sceneNumber = ms.FindNextSceneNumber(sceneContainer)
 	}
 	return sceneNumber
-}
-
-var nameReplaceRegex = regexp.MustCompile(`^\d\d`)
-
-func makeRoomForScene(scenes []ms.Scene, sceneNumber int) (err error) {
-	// iterate the scenes and move the specified scene number forward one spot
-	// (and recursively make room for that move if needed)
-	for i, scene := range scenes {
-		if scene.Number() == sceneNumber {
-			if len(scenes) > 1 {
-				// recursively make room for the move we're about to make
-				err = makeRoomForScene(scenes[i+1:], scene.Number()+1)
-				if err != nil {
-					return
-				}
-			}
-
-			// determine new filename by incrementing scene number prefix on existing name
-			newName := nameReplaceRegex.ReplaceAllString(filepath.Base(scene.Path()), fmt.Sprintf("%02d", sceneNumber+1))
-
-			// move the file
-			err = os.Rename(scene.Path(), filepath.Join(filepath.Dir(scene.Path()), newName))
-			if err != nil {
-				return
-			}
-		}
-	}
-	return
 }
 
 func createScene(path string, sceneNumber int, name string) (err error) {
@@ -95,7 +56,7 @@ func Touch(otis o.Otis, args *Args) {
 	sceneNumber := targetSceneNumber(args, sceneContainer)
 
 	// if the target scene number is already in use, move things to make room for it
-	err = makeRoomForScene(sceneContainer.Scenes(), sceneNumber)
+	err = ms.MakeRoomForScene(sceneContainer.Scenes(), sceneNumber)
 
 	// add the new scene file
 	err = createScene(path, sceneNumber, args.Name)

@@ -48,3 +48,7 @@ func (c *chapter) Title() string {
 func (c *chapter) Number() *int {
 	return c.number
 }
+
+func (c *chapter) Path() string {
+	return c.node.path
+}

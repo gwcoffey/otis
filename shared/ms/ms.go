@@ -3,10 +3,14 @@ package ms
 import (
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
+	"regexp"
 )
 
 type SceneContainer interface {
 	Scenes() []Scene
+	Path() string
 }
 
 func validateManuscript(manuscript Manuscript) (err error) {
@@ -46,6 +50,44 @@ func Load(path string) (ms Manuscript, err error) {
 	ms = &manuscript{node: node}
 	if err = validateManuscript(ms); err != nil {
 		return
+	}
+	return
+}
+
+func FindNextSceneNumber(sceneContainer SceneContainer) int {
+	sceneNumber := 0
+	for _, scene := range sceneContainer.Scenes() {
+		if sceneNumber <= scene.Number() {
+			sceneNumber = scene.Number() + 1
+		}
+	}
+	return sceneNumber
+}
+
+var nameReplaceRegex = regexp.MustCompile(`^\d\d`)
+
+func MakeRoomForScene(scenes []Scene, sceneNumber int) (err error) {
+	// iterate the scenes and move the specified scene number forward one spot
+	// (and recursively make room for that move if needed)
+	for i, scene := range scenes {
+		if scene.Number() == sceneNumber {
+			if len(scenes) > 1 {
+				// recursively make room for the move we're about to make
+				err = MakeRoomForScene(scenes[i+1:], scene.Number()+1)
+				if err != nil {
+					return
+				}
+			}
+
+			// determine new filename by incrementing scene number prefix on existing name
+			newName := nameReplaceRegex.ReplaceAllString(filepath.Base(scene.Path()), fmt.Sprintf("%02d", sceneNumber+1))
+
+			// move the file
+			err = os.Rename(scene.Path(), filepath.Join(filepath.Dir(scene.Path()), newName))
+			if err != nil {
+				return
+			}
+		}
 	}
 	return
 }

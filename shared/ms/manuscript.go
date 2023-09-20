@@ -3,6 +3,7 @@ package ms
 import (
 	"fmt"
 	"gwcoffey/otis/shared/o/oerr"
+	"path/filepath"
 	"strings"
 )
 
@@ -14,6 +15,7 @@ type Manuscript interface {
 	fmt.Stringer
 	Works() []Work
 	ResolveSceneContainer(path string) (SceneContainer, error)
+	ResolveScene(path string) (Scene, error)
 }
 
 func (m *manuscript) String() string {
@@ -81,6 +83,28 @@ func (m *manuscript) ResolveSceneContainer(path string) (result SceneContainer, 
 
 	if result == nil {
 		err = oerr.FolderPathNotFound(path)
+		return
+	}
+
+	return
+}
+
+func (m *manuscript) ResolveScene(path string) (result Scene, err error) {
+	sceneContainer, err := m.ResolveSceneContainer(filepath.Dir(path))
+	if err != nil {
+		return
+	}
+
+	// search the container for a matching scene
+	for _, scene := range sceneContainer.Scenes() {
+		if scene.Path() == path {
+			result = scene
+			break
+		}
+	}
+
+	if result == nil {
+		err = oerr.ScenePathNotFound(path)
 		return
 	}
 

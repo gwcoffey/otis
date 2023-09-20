@@ -6,6 +6,7 @@ import (
 	"gwcoffey/otis/commands/compile"
 	"gwcoffey/otis/commands/echo"
 	"gwcoffey/otis/commands/initcmd"
+	"gwcoffey/otis/commands/mv"
 	"gwcoffey/otis/commands/touch"
 	"gwcoffey/otis/commands/wordcount"
 	"gwcoffey/otis/shared/o"
@@ -18,6 +19,7 @@ var args struct {
 	Echo      *echo.Args      `arg:"subcommand:echo"`
 	WordCount *wordcount.Args `arg:"subcommand:wordcount"`
 	Touch     *touch.Args     `arg:"subcommand:touch"`
+	Move      *mv.Args        `arg:"subcommand:mv"`
 	Compile   *compile.Args   `arg:"subcommand:compile"`
 }
 
@@ -58,6 +60,8 @@ func doProjectCommand() {
 		compile.Compile(otis, args.Compile)
 	case args.Touch != nil:
 		touch.Touch(otis, args.Touch)
+	case args.Move != nil:
+		mv.Mv(otis, args.Move)
 	default:
 		panic(fmt.Sprintf("unexpected and unhandled command"))
 	}

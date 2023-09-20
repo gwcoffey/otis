@@ -12,6 +12,7 @@ type scene struct {
 type Scene interface {
 	fmt.Stringer
 	FileSystemObject
+	Container() SceneContainer
 	Number() int
 	Text() (string, error)
 }
@@ -22,6 +23,16 @@ func (s *scene) String() string {
 
 func (s *scene) Path() string {
 	return s.node.path
+}
+
+func (s *scene) Container() SceneContainer {
+	if s.folder != nil {
+		return s.folder
+	} else if s.work != nil {
+		return s.work
+	} else {
+		panic("scene with no container (this should not happen)")
+	}
 }
 
 func (s *scene) Number() int {
