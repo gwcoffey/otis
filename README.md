@@ -159,10 +159,6 @@ All these are available via the `otis` command. To get started, ask otis for hel
 $ otis -h
 ```
 
-The command expects to be run from within a project directory (which it identified by searching up the directory structure for the nearest `otis.yml`).
-
-> Note: If you really want to you can use `otis` on a project you're not *in* using the `--project` command line switch.
-
 ### Initializing a New Project
 
 To start a new project, create an empty directory, switch to it, and run:
