@@ -5,16 +5,14 @@ import (
 	"github.com/gomarkdown/markdown"
 	"github.com/gomarkdown/markdown/html"
 	"github.com/gomarkdown/markdown/parser"
-	"gwcoffey/otis/shared/ms"
-	"gwcoffey/otis/shared/o"
+	ms2 "gwcoffey/otis/ms"
 	"html/template"
 	"strings"
 )
 
 type templateData struct {
-	Work      ms.Work
-	Config    o.Otis
-	WordCount string
+	Manuscript ms2.Manuscript
+	WordCount  string
 }
 
 //go:embed output.html.tmpl
@@ -42,16 +40,16 @@ func loadTemplate() (tmpl *template.Template, err error) {
 	return
 }
 
-func WorkToHtml(config o.Otis, work ms.Work) (html string, err error) {
+func ManuscriptToHtml(m ms2.Manuscript) (html string, err error) {
 	htemplate, err := loadTemplate()
 	out := strings.Builder{}
 
-	wordcount, err := work.MsWordCount()
+	wordcount, err := ms2.ApproximateWordCount(m)
 	if err != nil {
 		return
 	}
 
-	err = htemplate.Execute(&out, templateData{Work: work, Config: config, WordCount: wordcount})
+	err = htemplate.Execute(&out, templateData{Manuscript: m, WordCount: wordcount})
 	if err != nil {
 		return
 	}

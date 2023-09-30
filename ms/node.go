@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/go-yaml/yaml"
-	"gwcoffey/otis/shared/text"
+	"gwcoffey/otis/text"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -18,20 +18,10 @@ import (
 type node struct {
 	isDir       bool
 	path        string
-	workMeta    *workMeta
 	chapterMeta *chapterMeta
 	children    []*node
 	content     []byte
 	fileNumber  int
-}
-
-// workMeta represents the metadata for a work, read directly from the `work.yml` in the directory
-// represented by the node (fields are exported to support YAML unmarshalling)
-type workMeta struct {
-	Title         string `yaml:"title"`
-	RunningTitle  string `yaml:"runningTitle"`
-	Author        string `yaml:"author"`
-	AuthorSurname string `yaml:"authorSurname"`
 }
 
 // chapterMeta represents the metadata for a chapter, read directly from the `chapter.yml` in the
@@ -42,7 +32,6 @@ type chapterMeta struct {
 }
 
 var metaFilenames = map[string]bool{
-	"work.yml":    true,
 	"chapter.yml": true,
 }
 
@@ -50,21 +39,6 @@ type FileSystemObject interface {
 	Path() string
 	Number() int
 	PrettyFileName() string
-}
-
-func (n *node) addWorkMeta(path string) (err error) {
-	content, err := os.ReadFile(filepath.Join(path, "work.yml"))
-	if errors.Is(err, fs.ErrNotExist) {
-		return nil
-	} else if err != nil {
-		return
-	}
-
-	if err = yaml.Unmarshal(content, &n.workMeta); err != nil {
-		return
-	}
-
-	return
 }
 
 func (n *node) addChapterMeta(path string) (err error) {
@@ -168,9 +142,6 @@ func (n *node) folders() (folders []Folder) {
 
 func newRootNode(path string) (n *node, err error) {
 	n = &node{isDir: true, path: path}
-	if err = n.addWorkMeta(path); err != nil {
-		return
-	}
 	if err = n.addChapterMeta(path); err != nil {
 		return
 	}

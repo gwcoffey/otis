@@ -2,7 +2,7 @@
 <html lang="en-us">
 <head>
 <meta charset="utf-8">
-<title>{{ .Work.Title }}</title>
+<title>{{ .Manuscript.Title }}</title>
 <style>
     :root {
         --margin: 1in;
@@ -71,19 +71,19 @@
 </head>
 <body>
     <section id="title-page">
-        <h1>{{ .Work.Title }}</h1>
-        <address class="by">by {{ .Config.Author.Name }}</address>
+        <h1>{{ .Manuscript.Title }}</h1>
+        <address class="by">by {{ .Manuscript.AuthorName }}</address>
 
         <address class="contact">
-            {{ with .Config.Author.RealName }}{{ . }}{{ else }}{{ .Config.Author.Name }}<br>{{ end }}
-            {{ .Config.Address | breaks }}
+            {{ .Manuscript.AuthorRealName }}<br>
+            {{ .Manuscript.AuthorAddress | breaks }}
         </address>
 
         <span id="word-count">{{ .WordCount }} words</span>
     </section>
 
-    {{ if gt (.Work.Chapters | len) 0 -}}
-        {{- range $index, $chapter := .Work.Chapters }}
+    {{ if gt (.Manuscript.Chapters | len) 0 -}}
+        {{- range $index, $chapter := .Manuscript.Chapters }}
             <section class="content">
             {{- with $chapter.Number }}
                 <h2 class="numbered">{{ $chapter.Title }}</h2>
@@ -100,7 +100,7 @@
         {{ end -}}
     {{- else -}}
         <section class="content">
-        {{- range $index, $scene := .Work.Scenes -}}
+        {{- range $index, $scene := .Manuscript.Scenes -}}
             {{ if gt $index 0 }}
                 <hr>
             {{ end }}

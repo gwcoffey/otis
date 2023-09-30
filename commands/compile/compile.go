@@ -4,12 +4,12 @@ import (
 	"bufio"
 	_ "embed"
 	"fmt"
-	"gwcoffey/otis/shared/ms"
-	"gwcoffey/otis/shared/ms/compile/html"
-	"gwcoffey/otis/shared/ms/compile/rtf"
-	"gwcoffey/otis/shared/ms/compile/tex"
-	"gwcoffey/otis/shared/o"
-	"gwcoffey/otis/shared/text"
+	"gwcoffey/otis/files"
+	ms2 "gwcoffey/otis/ms"
+	"gwcoffey/otis/ms/compile/html"
+	"gwcoffey/otis/ms/compile/rtf"
+	"gwcoffey/otis/ms/compile/tex"
+	"gwcoffey/otis/text"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -20,30 +20,13 @@ import (
 type Format int
 
 type Args struct {
-	WorkName *string `arg:"positional" help:"the work to compile, required if the manuscript has multiple works"`
-	Format   string  `arg:"-f" help:"the compiled output format (PDF, RTF, HTML, or TEX)" default:"PDF"`
-	Tag      *string `arg:"-t" help:"tag to append to the filename, [default: <current date>]"`
+	ProjectPath *string `arg:"positional"`
+	Format      string  `arg:"-f" help:"the compiled output format (PDF, RTF, HTML, or TEX)" default:"PDF"`
+	Tag         *string `arg:"-t" help:"tag to append to the filename, [default: <current date>]"`
 }
 
-func selectWork(args *Args, manuscript ms.Manuscript) ms.Work {
-	var work ms.Work
-	if args.WorkName != nil {
-		for _, w := range manuscript.Works() {
-			if filepath.Base(w.Path()) == *args.WorkName {
-				work = w
-				break
-			}
-		}
-	} else if len(manuscript.Works()) == 1 {
-		work = manuscript.Works()[0]
-	} else {
-		panic("specify a work")
-	}
-	return work
-}
-
-func generateTex(fileName string, otis o.Otis, work ms.Work) (err error) {
-	outDir, err := otis.DistDir()
+func generateTex(fileName string, manuscript ms2.Manuscript) (err error) {
+	outDir, err := files.DistDir(manuscript)
 	if err != nil {
 		return
 	}
@@ -54,16 +37,16 @@ func generateTex(fileName string, otis o.Otis, work ms.Work) (err error) {
 		return
 	}
 
-	return writeTex(path, otis, work)
+	return writeTex(path, manuscript)
 }
 
-func generatePdf(fileName string, otis o.Otis, work ms.Work) (err error) {
-	tmpDir, err := otis.TmpDir()
+func generatePdf(fileName string, manuscript ms2.Manuscript) (err error) {
+	tmpDir, err := files.TmpDir(manuscript)
 	if err != nil {
 		return
 	}
 
-	distDir, err := otis.DistDir()
+	distDir, err := files.DistDir(manuscript)
 	if err != nil {
 		return
 	}
@@ -86,12 +69,12 @@ func generatePdf(fileName string, otis o.Otis, work ms.Work) (err error) {
 		return
 	}
 
-	err = writeTex(texPath, otis, work)
+	err = writeTex(texPath, manuscript)
 	if err != nil {
 		return
 	}
 
-	err = execPdfLatex(texPath, otis)
+	err = execPdfLatex(texPath, manuscript)
 	if err != nil {
 		return
 	}
@@ -100,8 +83,8 @@ func generatePdf(fileName string, otis o.Otis, work ms.Work) (err error) {
 	return
 }
 
-func generateHtml(fileName string, otis o.Otis, work ms.Work) (err error) {
-	outDir, err := otis.DistDir()
+func generateHtml(fileName string, manuscript ms2.Manuscript) (err error) {
+	outDir, err := files.DistDir(manuscript)
 	if err != nil {
 		return
 	}
@@ -124,7 +107,7 @@ func generateHtml(fileName string, otis o.Otis, work ms.Work) (err error) {
 		}
 	}()
 
-	htmlContent, err := html.WorkToHtml(otis, work)
+	htmlContent, err := html.ManuscriptToHtml(manuscript)
 	if err != nil {
 		return
 	}
@@ -137,8 +120,8 @@ func generateHtml(fileName string, otis o.Otis, work ms.Work) (err error) {
 	return
 }
 
-func generateRtf(fileName string, otis o.Otis, work ms.Work) (err error) {
-	outDir, err := otis.DistDir()
+func generateRtf(fileName string, manuscript ms2.Manuscript) (err error) {
+	outDir, err := files.DistDir(manuscript)
 	if err != nil {
 		return
 	}
@@ -161,7 +144,7 @@ func generateRtf(fileName string, otis o.Otis, work ms.Work) (err error) {
 		}
 	}()
 
-	rtfContent, err := rtf.WorkToRtf(work, otis)
+	rtfContent, err := rtf.ManuscriptToHtml(manuscript)
 	if err != nil {
 		return
 	}
@@ -174,8 +157,8 @@ func generateRtf(fileName string, otis o.Otis, work ms.Work) (err error) {
 	return
 }
 
-func execPdfLatex(texPath string, otis o.Otis) (err error) {
-	tmpDir, err := otis.TmpDir()
+func execPdfLatex(texPath string, manuscript ms2.Manuscript) (err error) {
+	tmpDir, err := files.TmpDir(manuscript)
 	if err != nil {
 		return
 	}
@@ -193,7 +176,7 @@ func execPdfLatex(texPath string, otis o.Otis) (err error) {
 	return
 }
 
-func writeTex(path string, otis o.Otis, work ms.Work) (err error) {
+func writeTex(path string, manuscript ms2.Manuscript) (err error) {
 	file, err := os.Create(path)
 	if err != nil {
 		return
@@ -206,7 +189,7 @@ func writeTex(path string, otis o.Otis, work ms.Work) (err error) {
 		}
 	}()
 
-	latex, err := tex.WorkToTex(work, otis)
+	latex, err := tex.ManuscriptToTex(manuscript)
 	if err != nil {
 		return
 	}
@@ -219,30 +202,35 @@ func writeTex(path string, otis o.Otis, work ms.Work) (err error) {
 	return
 }
 
-func Compile(otis o.Otis, args *Args) {
-	manuscript, err := otis.Manuscript()
+func Compile(args *Args) {
+	var manuscript ms2.Manuscript
+	var err error
+
+	if &args.ProjectPath == nil {
+		manuscript, err = ms2.LoadHere()
+	} else {
+		manuscript, err = ms2.Load(*args.ProjectPath)
+	}
 	if err != nil {
 		panic(err)
 	}
 
-	work := selectWork(args, manuscript)
-
 	var fileName string
 	if args.Tag != nil {
-		fileName = fmt.Sprintf("%s-%s", text.ToKebab(work.Title()), *args.Tag)
+		fileName = fmt.Sprintf("%s-%s", text.ToKebab(manuscript.Title()), *args.Tag)
 	} else {
-		fileName = fmt.Sprintf("%s-%s", text.ToKebab(work.Title()), time.Now().Format("2006-01-02"))
+		fileName = fmt.Sprintf("%s-%s", text.ToKebab(manuscript.Title()), time.Now().Format("2006-01-02"))
 	}
 
 	switch strings.ToUpper(args.Format) {
 	case "PDF":
-		err = generatePdf(fileName, otis, work)
+		err = generatePdf(fileName, manuscript)
 	case "RTF":
-		err = generateRtf(fileName, otis, work)
+		err = generateRtf(fileName, manuscript)
 	case "HTML":
-		err = generateHtml(fileName, otis, work)
+		err = generateHtml(fileName, manuscript)
 	case "TEX":
-		err = generateTex(fileName, otis, work)
+		err = generateTex(fileName, manuscript)
 	}
 	if err != nil {
 		panic(err)

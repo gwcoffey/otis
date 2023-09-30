@@ -2,8 +2,7 @@ package rtf
 
 import (
 	"fmt"
-	"gwcoffey/otis/shared/ms"
-	"gwcoffey/otis/shared/o"
+	ms2 "gwcoffey/otis/ms"
 	"strings"
 )
 
@@ -47,7 +46,7 @@ func toRtfText(text string) string {
 }
 
 // writeScene writes a scene break (if needed) and then the scene itself
-func writeScene(scidx int, scene ms.Scene, out *strings.Builder) (err error) {
+func writeScene(scidx int, scene ms2.Scene, out *strings.Builder) (err error) {
 	var text string
 	if scidx > 0 {
 		// output scene break
@@ -65,8 +64,8 @@ func writeScene(scidx int, scene ms.Scene, out *strings.Builder) (err error) {
 	return
 }
 
-func WorkToRtf(work ms.Work, otis o.Otis) (rtf string, err error) {
-	wcount, err := work.MsWordCount()
+func ManuscriptToHtml(m ms2.Manuscript) (rtf string, err error) {
+	wcount, err := ms2.ApproximateWordCount(m)
 	if err != nil {
 		return
 	}
@@ -85,43 +84,35 @@ func WorkToRtf(work ms.Work, otis o.Otis) (rtf string, err error) {
 	out.WriteString(`\pard\tqr\tx9360`)
 
 	// output author name and wordcount
-	if name := otis.AuthorRealName(); name != nil {
-		out.WriteString(*otis.AuthorRealName())
-	} else {
-		out.WriteString(otis.AuthorName())
-	}
+	out.WriteString(m.AuthorRealName())
 	out.WriteString("\t")
 	out.WriteString(wcount + " words\\\n")
 
 	// paragraph with address lines
 	out.WriteString("\\pard\n")
-	out.WriteString(strings.ReplaceAll(otis.Address(), "\n", "\\\n"))
+	out.WriteString(strings.ReplaceAll(m.AuthorAddress(), "\n", "\\\n"))
 	out.WriteString("\\\n")
 
 	// paragraph double-spaced and centered
 	out.WriteString(`\pard\sl480\slmult1\qc `)
 
 	// output title and byline
-	out.WriteString("\\\n\\\n\\\n\\\n\\\n\\\n\\\n\\\n" + strings.ToUpper(work.Title()))
+	out.WriteString("\\\n\\\n\\\n\\\n\\\n\\\n\\\n\\\n" + strings.ToUpper(m.Title()))
 	out.WriteString("\\\n")
-	out.WriteString("By " + otis.AuthorName())
+	out.WriteString("By " + m.AuthorName())
 
 	// start a new section with header
 	out.WriteString(`\sect\sectd\sbknone\page`)
 	out.WriteString(`{\header\pard\f0\fs24\qr `)
-	if otis.AuthorSurname() != nil {
-		out.WriteString(*otis.AuthorSurname())
-	} else {
-		out.WriteString(otis.AuthorName())
-	}
+	out.WriteString(m.AuthorSurname())
 	out.WriteString(" / ")
-	out.WriteString(strings.ToUpper(work.RunningTitle()))
+	out.WriteString(strings.ToUpper(m.RunningTitle()))
 	out.WriteString(` / \chpgn`)
 	out.WriteString(` \par}`)
 
 	// content
-	if len(work.Chapters()) > 0 {
-		for chidx, chapter := range work.Chapters() {
+	if len(m.Chapters()) > 0 {
+		for chidx, chapter := range m.Chapters() {
 			if chidx > 0 {
 				out.WriteString("\\page\n")
 			}
@@ -142,7 +133,7 @@ func WorkToRtf(work ms.Work, otis o.Otis) (rtf string, err error) {
 			}
 		}
 	} else { // no chapters
-		for scidx, scene := range work.Scenes() {
+		for scidx, scene := range m.Scenes() {
 			err = writeScene(scidx, scene, &out)
 			if err != nil {
 				return

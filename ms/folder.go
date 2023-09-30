@@ -13,8 +13,8 @@ type folder struct {
 type Folder interface {
 	fmt.Stringer
 	FileSystemObject
-	SceneContainer
 	FolderContainer
+	Scenes() []Scene
 	AllScenes() []Scene
 }
 

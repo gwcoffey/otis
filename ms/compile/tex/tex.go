@@ -2,12 +2,11 @@ package tex
 
 import (
 	_ "embed"
-	"gwcoffey/otis/shared/ms"
-	"gwcoffey/otis/shared/o"
+	ms2 "gwcoffey/otis/ms"
 	"strings"
 )
 
-func writeScene(scidx int, scene ms.Scene, out *strings.Builder) (err error) {
+func writeScene(scidx int, scene ms2.Scene, out *strings.Builder) (err error) {
 	if scidx > 0 {
 		out.WriteString(command("newscene", nil, nil))
 	}
@@ -22,25 +21,21 @@ func writeScene(scidx int, scene ms.Scene, out *strings.Builder) (err error) {
 	return
 }
 
-func WorkToTex(work ms.Work, otis o.Otis) (tex string, err error) {
+func ManuscriptToTex(m ms2.Manuscript) (tex string, err error) {
 
 	out := strings.Builder{}
 	out.WriteString(command("documentclass", []string{"novel", "courier"}, []string{"sffms"}))
 	out.WriteString(command("frenchspacing", nil, nil))
-	out.WriteString(command("author", nil, []string{otis.AuthorName()}))
+	out.WriteString(command("author", nil, []string{m.AuthorName()}))
 
-	if name := otis.AuthorRealName(); name != nil {
-		out.WriteString(command("authorname", nil, []string{*name}))
-	}
-	if name := otis.AuthorSurname(); name != nil {
-		out.WriteString(command("surname", nil, []string{*name}))
-	}
-	out.WriteString(command("address", nil, []string{otis.Address()}))
+	out.WriteString(command("authorname", nil, []string{m.AuthorRealName()}))
+	out.WriteString(command("surname", nil, []string{m.AuthorSurname()}))
+	out.WriteString(command("address", nil, []string{m.AuthorAddress()}))
 
-	out.WriteString(command("title", nil, []string{work.Title()}))
-	out.WriteString(command("runningtitle", nil, []string{work.RunningTitle()}))
+	out.WriteString(command("title", nil, []string{m.Title()}))
+	out.WriteString(command("runningtitle", nil, []string{m.RunningTitle()}))
 
-	wcount, err := work.MsWordCount()
+	wcount, err := ms2.ApproximateWordCount(m)
 	if err != nil {
 		return
 	}
@@ -48,8 +43,8 @@ func WorkToTex(work ms.Work, otis o.Otis) (tex string, err error) {
 
 	out.WriteString(command("begin", nil, []string{"document"}))
 
-	if len(work.Chapters()) > 0 {
-		for _, chapter := range work.Chapters() {
+	if len(m.Chapters()) > 0 {
+		for _, chapter := range m.Chapters() {
 			out.WriteString("\n") // blank line before each chap for better readability
 			if chapter.Number() == nil {
 				out.WriteString(command("chapter*", nil, []string{chapter.Title()}))
@@ -64,7 +59,7 @@ func WorkToTex(work ms.Work, otis o.Otis) (tex string, err error) {
 			}
 		}
 	} else { // no chapters
-		for i, scene := range work.Scenes() {
+		for i, scene := range m.Scenes() {
 			err = writeScene(i, scene, &out)
 			if err != nil {
 				return

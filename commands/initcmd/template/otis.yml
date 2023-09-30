@@ -1,3 +1,9 @@
+# Required: The title of this manuscript (appears on the title page)
+title: Your Title
+
+# Recommended: The running / short title (appears on manuscript page headers)
+runningTitle: Running
+
 # Author information
 author:
 

@@ -2,9 +2,8 @@ package mv
 
 import (
 	"fmt"
-	"gwcoffey/otis/shared/ms"
-	"gwcoffey/otis/shared/o"
-	"gwcoffey/otis/shared/o/oerr"
+	ms2 "gwcoffey/otis/ms"
+	"gwcoffey/otis/oerr"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -16,18 +15,18 @@ type Args struct {
 	At         *int    `arg:"--at,-a" help:"the scene number at which to insert"`
 }
 
-func targetSceneNumber(args *Args, sceneContainer ms.SceneContainer) int {
+func targetSceneNumber(args *Args, folder ms2.Folder) int {
 	var sceneNumber int
 	if args.At != nil {
 		sceneNumber = *args.At
 	} else {
-		sceneNumber = ms.FindNextSceneNumber(sceneContainer)
+		sceneNumber = ms2.FindNextSceneNumber(folder)
 	}
 	return sceneNumber
 }
 
-func Mv(otis o.Otis, args *Args) {
-	m, err := otis.Manuscript()
+func Mv(args *Args) {
+	m, err := ms2.LoadHere()
 	if err != nil {
 		panic(err)
 	}
@@ -43,7 +42,7 @@ func Mv(otis o.Otis, args *Args) {
 	}
 
 	if args.TargetPath != nil {
-		target, err := m.ResolveSceneContainer(*args.TargetPath)
+		target, err := m.ResolveFolder(*args.TargetPath)
 		if err != nil {
 			panic(err)
 		}
@@ -61,9 +60,9 @@ func Mv(otis o.Otis, args *Args) {
 
 var namePrefixRegex = regexp.MustCompile(`^\d+`)
 
-func moveToSceneNumber(scene ms.Scene, sceneNumber int) (err error) {
+func moveToSceneNumber(scene ms2.Scene, sceneNumber int) (err error) {
 	if sceneNumber < scene.Number() {
-		err = ms.MakeRoomForScene(scene.Container().Scenes(), sceneNumber)
+		err = ms2.MakeRoomForScene(scene.Folder().Scenes(), sceneNumber)
 		if err != nil {
 			return
 		}
@@ -87,7 +86,7 @@ func moveToSceneNumber(scene ms.Scene, sceneNumber int) (err error) {
 	} else if sceneNumber > scene.Number() {
 		// when moving forward, we have to fill in the space we left behind so the actual
 		// final destination is one less than requested
-		err = ms.MakeRoomForScene(scene.Container().Scenes(), sceneNumber)
+		err = ms2.MakeRoomForScene(scene.Folder().Scenes(), sceneNumber)
 		if err != nil {
 			return
 		}
@@ -100,8 +99,8 @@ func moveToSceneNumber(scene ms.Scene, sceneNumber int) (err error) {
 	}
 }
 
-func moveToPath(scene ms.Scene, target ms.SceneContainer, sceneNumber int) (err error) {
-	err = ms.MakeRoomForScene(target.Scenes(), sceneNumber)
+func moveToPath(scene ms2.Scene, target ms2.Folder, sceneNumber int) (err error) {
+	err = ms2.MakeRoomForScene(target.Scenes(), sceneNumber)
 	if err != nil {
 		return
 	}

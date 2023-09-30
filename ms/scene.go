@@ -3,16 +3,16 @@ package ms
 import "fmt"
 
 type scene struct {
-	node    *node
-	folder  *folder
-	work    *work
-	chapter *chapter
+	node       *node
+	folder     *folder
+	manuscript *manuscript
+	chapter    *chapter
 }
 
 type Scene interface {
 	fmt.Stringer
 	FileSystemObject
-	Container() SceneContainer
+	Folder() Folder
 	Number() int
 	Text() (string, error)
 }
@@ -25,14 +25,8 @@ func (s *scene) Path() string {
 	return s.node.path
 }
 
-func (s *scene) Container() SceneContainer {
-	if s.folder != nil {
-		return s.folder
-	} else if s.work != nil {
-		return s.work
-	} else {
-		panic("scene with no container (this should not happen)")
-	}
+func (s *scene) Folder() Folder {
+	return s.folder
 }
 
 func (s *scene) Number() int {

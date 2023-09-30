@@ -2,9 +2,8 @@ package touch
 
 import (
 	"fmt"
-	"gwcoffey/otis/shared/ms"
-	"gwcoffey/otis/shared/o"
-	"gwcoffey/otis/shared/text"
+	ms2 "gwcoffey/otis/ms"
+	"gwcoffey/otis/text"
 	"os"
 	"path/filepath"
 )
@@ -15,12 +14,12 @@ type Args struct {
 	At   *int   `arg:"--at,-a" help:"the scene number at which to insert"`
 }
 
-func targetSceneNumber(args *Args, sceneContainer ms.SceneContainer) int {
+func targetSceneNumber(args *Args, folder ms2.Folder) int {
 	var sceneNumber int
 	if args.At != nil {
 		sceneNumber = *args.At
 	} else {
-		sceneNumber = ms.FindNextSceneNumber(sceneContainer)
+		sceneNumber = ms2.FindNextSceneNumber(folder)
 	}
 	return sceneNumber
 }
@@ -36,8 +35,8 @@ func createScene(path string, sceneNumber int, name string) (err error) {
 	return
 }
 
-func Touch(otis o.Otis, args *Args) {
-	m, err := otis.Manuscript()
+func Touch(args *Args) {
+	m, err := ms2.LoadHere()
 	if err != nil {
 		panic(err)
 	}
@@ -47,7 +46,7 @@ func Touch(otis o.Otis, args *Args) {
 		panic(err)
 	}
 
-	sceneContainer, err := m.ResolveSceneContainer(path)
+	sceneContainer, err := m.ResolveFolder(path)
 	if err != nil {
 		panic(err)
 	}
@@ -56,7 +55,7 @@ func Touch(otis o.Otis, args *Args) {
 	sceneNumber := targetSceneNumber(args, sceneContainer)
 
 	// if the target scene number is already in use, move things to make room for it
-	err = ms.MakeRoomForScene(sceneContainer.Scenes(), sceneNumber)
+	err = ms2.MakeRoomForScene(sceneContainer.Scenes(), sceneNumber)
 
 	// add the new scene file
 	err = createScene(path, sceneNumber, args.Name)

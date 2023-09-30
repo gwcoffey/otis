@@ -1,13 +1,10 @@
 package wordcount
 
 import (
-	"errors"
 	"fmt"
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
-	"gwcoffey/otis/shared/ms"
-	"gwcoffey/otis/shared/o"
-	"path/filepath"
+	ms2 "gwcoffey/otis/ms"
 	"strings"
 	"unicode/utf8"
 )
@@ -16,8 +13,8 @@ const maxWidth = 40
 const indentSize = "  "
 
 type Args struct {
-	Work      *string `arg:"positional" help:"count only the specified work in a multi-work manuscript"`
-	ByChapter bool    `arg:"--chapter,-c" help:"count by chapter rather than by folder"`
+	ProjectPath *string `arg:"positional" help:"path to the otis project"`
+	ByChapter   bool    `arg:"--chapter,-c" help:"count by chapter rather than by folder"`
 }
 
 type printBy int
@@ -27,24 +24,12 @@ const (
 	byChapter
 )
 
-func sceneWordCount(scene ms.Scene) (count int, err error) {
+func sceneWordCount(scene ms2.Scene) (count int, err error) {
 	text, err := scene.Text()
 	if err != nil {
 		return
 	}
 	count = len(strings.Fields(text))
-	return
-}
-
-func workWordCount(work ms.Work) (count int, err error) {
-	for _, scene := range work.AllScenes() {
-		var scount int
-		scount, err = sceneWordCount(scene)
-		if err != nil {
-			return
-		}
-		count += scount
-	}
 	return
 }
 
@@ -56,30 +41,23 @@ func truncate(str string) string {
 	return result
 }
 
-func printWork(work ms.Work, by printBy) (err error) {
-	count, err := workWordCount(work)
+func printManuscript(m ms2.Manuscript, by printBy) (err error) {
+	count, err := ms2.WordCount(m)
 	if err != nil {
 		return
 	}
-	printLine(truncate(work.Title()), count, true)
-
-	for _, scene := range work.Scenes() {
-		err = printScene(scene, indentSize)
-		if err != nil {
-			return
-		}
-	}
+	printLine(truncate(m.Title()), count, true)
 
 	switch by {
 	case byFolder:
-		for _, folder := range work.Folders() {
+		for _, folder := range m.Folders() {
 			err = printFolder(folder, indentSize)
 			if err != nil {
 				return
 			}
 		}
 	case byChapter:
-		for _, chapter := range work.Chapters() {
+		for _, chapter := range m.Chapters() {
 			err = printChapter(chapter, indentSize)
 			if err != nil {
 				return
@@ -89,7 +67,7 @@ func printWork(work ms.Work, by printBy) (err error) {
 	return
 }
 
-func printFolder(folder ms.Folder, indent string) (err error) {
+func printFolder(folder ms2.Folder, indent string) (err error) {
 	fcount, err := folderWordCount(folder)
 	if err != nil {
 		return
@@ -116,7 +94,7 @@ func printFolder(folder ms.Folder, indent string) (err error) {
 	return
 }
 
-func folderWordCount(folder ms.Folder) (count int, err error) {
+func folderWordCount(folder ms2.Folder) (count int, err error) {
 	for _, scene := range folder.AllScenes() {
 		var scount int
 		scount, err = sceneWordCount(scene)
@@ -128,7 +106,7 @@ func folderWordCount(folder ms.Folder) (count int, err error) {
 	return
 }
 
-func printChapter(chapter ms.Chapter, indent string) (err error) {
+func printChapter(chapter ms2.Chapter, indent string) (err error) {
 	ccount, err := chapterWordCount(chapter)
 	if err != nil {
 		return
@@ -145,7 +123,7 @@ func printChapter(chapter ms.Chapter, indent string) (err error) {
 	return
 }
 
-func chapterWordCount(chapter ms.Chapter) (count int, err error) {
+func chapterWordCount(chapter ms2.Chapter) (count int, err error) {
 	var scount int
 	for _, scene := range chapter.Scenes() {
 		scount, err = sceneWordCount(scene)
@@ -157,7 +135,7 @@ func chapterWordCount(chapter ms.Chapter) (count int, err error) {
 	return
 }
 
-func printScene(scene ms.Scene, indent string) (err error) {
+func printScene(scene ms2.Scene, indent string) (err error) {
 	scount, err := sceneWordCount(scene)
 	if err != nil {
 		return
@@ -179,32 +157,15 @@ func printLine(label string, count int, emphasize bool) {
 	}
 }
 
-func selectWorks(args *Args, manuscript ms.Manuscript) (works []ms.Work, err error) {
-	works = manuscript.Works()
-
-	if args.Work != nil {
-		for _, work := range works {
-			if filepath.Base(work.Path()) == *args.Work {
-				works = []ms.Work{work}
-				return
-			}
-		}
-		err = errors.New(fmt.Sprintf("no such work: %s", *args.Work))
-	}
-
-	return
-}
-
-func WordCount(otis o.Otis, args *Args) {
-	var manuscript ms.Manuscript
+func WordCount(args *Args) {
+	var manuscript ms2.Manuscript
 	var err error
 
-	manuscript, err = otis.Manuscript()
-	if err != nil {
-		panic(err)
+	if args.ProjectPath == nil {
+		manuscript, err = ms2.LoadHere()
+	} else {
+		manuscript, err = ms2.Load(*args.ProjectPath)
 	}
-
-	works, err := selectWorks(args, manuscript)
 	if err != nil {
 		panic(err)
 	}
@@ -214,10 +175,8 @@ func WordCount(otis o.Otis, args *Args) {
 		by = byChapter
 	}
 
-	for _, work := range works {
-		err := printWork(work, by)
-		if err != nil {
-			panic(err)
-		}
+	err = printManuscript(manuscript, by)
+	if err != nil {
+		panic(err)
 	}
 }
