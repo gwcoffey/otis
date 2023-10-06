@@ -14,6 +14,7 @@ type Args struct {
 	Path       string  `arg:"positional,required" help:"the scene to move"`
 	TargetPath *string `arg:"positional" help:"the target path to move to"`
 	At         *int    `arg:"--at,-a" help:"the scene number at which to insert"`
+	Force      bool    `arg:"--force,-f" help:"move other files around without confirmation"`
 }
 
 func appendMoveToEndOfDir(workList work.List, scene string, dir string) (work.List, error) {
@@ -171,7 +172,7 @@ func Mv(args *Args) {
 		panic(err)
 	}
 
-	err = work.Execute(workList, false)
+	err = work.Execute(workList, args.Force)
 	if err != nil {
 		panic(err)
 	}

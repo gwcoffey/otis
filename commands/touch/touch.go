@@ -9,9 +9,10 @@ import (
 )
 
 type Args struct {
-	Path string `arg:"positional,required" help:"where to put the scene"`
-	Name string `arg:"positional,required" help:"the name of the scene"`
-	At   *int   `arg:"--at,-a" help:"the scene number at which to insert"`
+	Path  string `arg:"positional,required" help:"where to put the scene"`
+	Name  string `arg:"positional,required" help:"the name of the scene"`
+	At    *int   `arg:"--at,-a" help:"the scene number at which to insert"`
+	Force bool   `arg:"--force,-f" help:"move other files around without confirmation"`
 }
 
 func targetSceneNumber(args *Args) (num int, err error) {
@@ -61,7 +62,7 @@ func Touch(args *Args) {
 	workList, err := makeRenameWorkList(args.Path, sceneNumber)
 	workList = work.AppendAdd(workList, filepath.Join(args.Path, msfs.MakeFilename(args.Name, sceneNumber)))
 
-	err = work.Execute(workList, false)
+	err = work.Execute(workList, args.Force)
 	if err != nil {
 		panic(err)
 	}
