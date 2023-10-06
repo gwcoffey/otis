@@ -4,12 +4,12 @@ import (
 	"errors"
 	"fmt"
 	"github.com/go-yaml/yaml"
+	"gwcoffey/otis/msfs"
 	"gwcoffey/otis/text"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"regexp"
-	"strconv"
 	"strings"
 )
 
@@ -85,19 +85,12 @@ func (n *node) addChildren(path string) (err error) {
 	return
 }
 
-var numberPrefixPattern = regexp.MustCompile(`^\d+`)
-
-func (n *node) setFileNumber() (err error) {
-	matches := numberPrefixPattern.FindStringSubmatch(filepath.Base(n.path))
-	if len(matches) == 1 {
-		n.fileNumber, err = strconv.Atoi(matches[0])
-		if err != nil {
-			return // this should never happen
-		}
-	} else {
-		err = errors.New(fmt.Sprintf("%s is missing required number prefix", n.path))
+func (n *node) setFileNumber() {
+	var err error
+	n.fileNumber, err = msfs.FileNumber(n.path)
+	if err != nil {
+		n.fileNumber = -1
 	}
-
 	return
 }
 
@@ -155,16 +148,12 @@ func newDirNode(path string) (n *node, err error) {
 	if n, err = newRootNode(path); err != nil {
 		return
 	}
-	if err = n.setFileNumber(); err != nil {
-		return
-	}
+	n.setFileNumber()
 	return
 }
 
 func newFileNode(path string) (n *node, err error) {
 	n = &node{isDir: false, path: path}
-	if err = n.setFileNumber(); err != nil {
-		return
-	}
+	n.setFileNumber()
 	return
 }

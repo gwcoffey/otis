@@ -55,9 +55,24 @@ func Load(path string) (ms Manuscript, err error) {
 	return
 }
 
+// LoadContaining loads the manuscript that contains a given path
+func LoadContaining(path string) (Manuscript, error) {
+	msPath, err := findProjectRoot(path)
+	if err != nil {
+		return nil, err
+	}
+
+	return Load(msPath)
+}
+
 // LoadHere loads the manuscript that contains the current working directory
 func LoadHere() (Manuscript, error) {
-	path, err := findProjectRoot()
+	path, err := os.Getwd()
+	if err != nil {
+		return nil, err
+	}
+
+	path, err = findProjectRoot(path)
 	if err != nil {
 		return nil, err
 	}
@@ -65,10 +80,18 @@ func LoadHere() (Manuscript, error) {
 	return Load(path)
 }
 
-func findProjectRoot() (path string, err error) {
-	path, err = os.Getwd()
+func findProjectRoot(inPath string) (path string, err error) {
+	path, err = filepath.Abs(inPath)
 	if err != nil {
 		return
+	}
+
+	finfo, err := os.Stat(path)
+	if err != nil {
+		return
+	}
+	if !finfo.IsDir() {
+		path = filepath.Dir(path)
 	}
 
 	for ; path != filepath.Dir(path); path = filepath.Dir(path) {
@@ -80,16 +103,6 @@ func findProjectRoot() (path string, err error) {
 
 	err = oerr.ProjectNotFound()
 	return
-}
-
-func FindNextSceneNumber(folder Folder) int {
-	sceneNumber := 0
-	for _, scene := range folder.Scenes() {
-		if sceneNumber <= scene.Number() {
-			sceneNumber = scene.Number() + 1
-		}
-	}
-	return sceneNumber
 }
 
 var nameReplaceRegex = regexp.MustCompile(`^\d\d`)

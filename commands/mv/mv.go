@@ -1,12 +1,13 @@
 package mv
 
 import (
-	"fmt"
-	ms2 "gwcoffey/otis/ms"
+	"gwcoffey/otis/commands/work"
+	"gwcoffey/otis/ms"
+	"gwcoffey/otis/msfs"
 	"gwcoffey/otis/oerr"
+	"math"
 	"os"
 	"path/filepath"
-	"regexp"
 )
 
 type Args struct {
@@ -15,96 +16,163 @@ type Args struct {
 	At         *int    `arg:"--at,-a" help:"the scene number at which to insert"`
 }
 
-func targetSceneNumber(args *Args, folder ms2.Folder) int {
-	var sceneNumber int
-	if args.At != nil {
-		sceneNumber = *args.At
-	} else {
-		sceneNumber = ms2.FindNextSceneNumber(folder)
+func appendMoveToEndOfDir(workList work.List, scene string, dir string) (work.List, error) {
+	lastSceneNumber, err := msfs.LastSceneNumber(dir)
+	if err != nil {
+		return nil, err
 	}
-	return sceneNumber
+
+	workList = work.AppendMove(workList, scene, filepath.Join(dir, msfs.RenumberFilename(filepath.Base(scene), lastSceneNumber+1)))
+
+	workList, err = closeHole(workList, scene)
+	if err != nil {
+		return nil, err
+	}
+
+	return workList, nil
+}
+
+func appendMoveToDirAt(workList work.List, scene string, dir string, sceneNumber int) (work.List, error) {
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return nil, err
+	}
+
+	// move existing scenes up by one to make a hole
+	for _, entry := range entries {
+		var num int
+		num, nerr := msfs.FileNumber(filepath.Join(dir, entry.Name()))
+		if nerr != nil {
+			continue // ignore files with no file number
+		}
+		if num > sceneNumber {
+			workList = work.AppendRename(workList, filepath.Join(dir, entry.Name()), msfs.RenumberFilename(entry.Name(), num+1))
+		}
+	}
+
+	// move the scene into the hole
+	workList = work.AppendMove(workList, scene, filepath.Join(dir, msfs.RenumberFilename(filepath.Base(scene), sceneNumber)))
+
+	// close the hole left behind
+	workList, err = closeHole(workList, scene)
+	if err != nil {
+		return nil, err
+	}
+
+	return workList, nil
+}
+
+func closeHole(workList work.List, scene string) (work.List, error) {
+	dir := filepath.Dir(scene)
+	sceneNumber, err := msfs.FileNumber(scene)
+	if err != nil {
+		return workList, nil // nothing to do, but not really an error
+	}
+
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return workList, err
+	}
+
+	for _, entry := range entries {
+		var num int
+		num, nerr := msfs.FileNumber(entry.Name())
+		if nerr != nil {
+			continue // just ignore files with no number
+		}
+		if num > sceneNumber {
+			workList = work.AppendRename(workList, filepath.Join(dir, entry.Name()), msfs.RenumberFilename(entry.Name(), num-1))
+		}
+	}
+
+	return workList, nil
+}
+
+func appendMoveInSameDir(workList work.List, manuscript ms.Manuscript, scene string, sceneNumber int) (work.List, error) {
+	tmp, err := msfs.TmpDir(manuscript.Path())
+	if err != nil {
+		return nil, err
+	}
+
+	tmpFile := filepath.Join(tmp, filepath.Base(scene))
+	originalSceneNumber, nerr := msfs.FileNumber(scene)
+	if nerr != nil {
+		// we'll move the scene into place, but there's no hole left behind
+		// so setting this huge so nothing will be ahead of it
+		originalSceneNumber = math.MaxInt
+	}
+
+	lastScene, err := msfs.LastSceneNumber(filepath.Dir(scene))
+	if err != nil {
+		return nil, err
+	}
+
+	if lastScene == originalSceneNumber {
+		lastScene = lastScene - 1
+	}
+
+	sceneNumber = int(math.Min(float64(sceneNumber), float64(lastScene+1)))
+
+	// if we're not moving anything, short circuit
+	if sceneNumber == originalSceneNumber {
+		return workList, nil
+	}
+
+	// otherwise move the scene to a temp location and then make a space for it and move
+	// it back in
+	workList = work.AppendMove(workList, scene, tmpFile)
+
+	// close the hole
+	entries, err := os.ReadDir(filepath.Dir(scene))
+	if err != nil {
+		return nil, err
+	}
+
+	for _, entry := range entries {
+		num, nerr := msfs.FileNumber(entry.Name())
+		if num == originalSceneNumber || nerr != nil {
+			// ignore the file we're moving and any unnumbered file
+			continue
+		} else if num >= originalSceneNumber && num <= sceneNumber {
+			// scenes between the scene and its new position need to move down to fill the space
+			workList = work.AppendRename(workList, filepath.Join(filepath.Dir(scene), entry.Name()), msfs.RenumberFilename(entry.Name(), num-1))
+		} else if num >= sceneNumber && num <= originalSceneNumber {
+			// scenes after the target and before the scene need to move up to make space
+			workList = work.AppendRename(workList, filepath.Join(filepath.Dir(scene), entry.Name()), msfs.RenumberFilename(entry.Name(), num+1))
+		}
+	}
+
+	// move the scene to from tmp to the target
+	workList = work.AppendMove(workList, tmpFile, filepath.Join(filepath.Dir(scene), msfs.RenumberFilename(filepath.Base(scene), sceneNumber)))
+
+	return workList, nil
 }
 
 func Mv(args *Args) {
-	m, err := ms2.LoadHere()
+	manuscript, err := ms.LoadContaining(args.Path)
 	if err != nil {
 		panic(err)
 	}
 
-	path, err := filepath.Abs(args.Path)
-	if err != nil {
-		panic(err)
-	}
-
-	scene, err := m.ResolveScene(path)
-	if err != nil {
-		panic(err)
-	}
-
+	workList := work.List{}
 	if args.TargetPath != nil {
-		target, err := m.ResolveFolder(*args.TargetPath)
-		if err != nil {
-			panic(err)
+		if args.At == nil {
+			workList, err = appendMoveToEndOfDir(workList, args.Path, *args.TargetPath)
+		} else {
+			workList, err = appendMoveToDirAt(workList, args.Path, *args.TargetPath, *args.At)
 		}
-
-		sceneNumber := targetSceneNumber(args, target)
-
-		err = moveToPath(scene, target, sceneNumber)
 	} else if args.At != nil {
-		err = moveToSceneNumber(scene, *args.At)
+		workList, err = appendMoveInSameDir(workList, manuscript, args.Path, *args.At)
 	} else {
 		panic(oerr.PathOrAtRequired())
 	}
 
-}
-
-var namePrefixRegex = regexp.MustCompile(`^\d+`)
-
-func moveToSceneNumber(scene ms2.Scene, sceneNumber int) (err error) {
-	if sceneNumber < scene.Number() {
-		err = ms2.MakeRoomForScene(scene.Folder().Scenes(), sceneNumber)
-		if err != nil {
-			return
-		}
-
-		// TODO: New plan:
-		// 1. copy the container to a temp location
-		// 2. in the copy, move the operand scene to a temp location
-		// 3. re-number the remaining scenes to make room
-		// 4. move the operand scene into place
-		// 5. atomically replace the original container with the new one
-		// ... if at any point we fail, we clean up the temp files and the original
-		// ... container is un-touched
-		// re-order things, and then atomically move it back
-
-		// when moving backwards, by the time we've made the space, the scene we're moving has
-		// moved up by one
-		fromScenePath := namePrefixRegex.ReplaceAllString(scene.Path(), fmt.Sprintf("%02d", scene.Number()+1))
-		toScenePath := namePrefixRegex.ReplaceAllString(scene.Path(), fmt.Sprintf("%02d", sceneNumber))
-		err = os.Rename(fromScenePath, toScenePath)
-		return
-	} else if sceneNumber > scene.Number() {
-		// when moving forward, we have to fill in the space we left behind so the actual
-		// final destination is one less than requested
-		err = ms2.MakeRoomForScene(scene.Folder().Scenes(), sceneNumber)
-		if err != nil {
-			return
-		}
-
-		err = os.Rename(scene.Path(), namePrefixRegex.ReplaceAllString(scene.Path(), fmt.Sprintf("%02d", sceneNumber)))
-		return
-	} else {
-		// move to self -- nothing to do
-		return
-	}
-}
-
-func moveToPath(scene ms2.Scene, target ms2.Folder, sceneNumber int) (err error) {
-	err = ms2.MakeRoomForScene(target.Scenes(), sceneNumber)
 	if err != nil {
-		return
+		panic(err)
 	}
 
-	err = os.Rename(scene.Path(), target.Path())
-	return
+	err = work.Execute(workList, false)
+	if err != nil {
+		panic(err)
+	}
 }

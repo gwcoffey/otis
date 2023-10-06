@@ -2,8 +2,6 @@ package ms
 
 import (
 	"fmt"
-	"gwcoffey/otis/oerr"
-	"path/filepath"
 	"strings"
 )
 
@@ -38,8 +36,6 @@ type Manuscript interface {
 	Folders() []Folder
 	Chapters() []Chapter
 	Scenes() []Scene
-	ResolveFolder(path string) (Folder, error)
-	ResolveScene(path string) (Scene, error)
 }
 
 func (m *manuscript) String() string {
@@ -116,62 +112,6 @@ func (m *manuscript) Scenes() (scenes []Scene) {
 			scenes = append(scenes, &scene{node: node, manuscript: m})
 		}
 	})
-
-	return
-}
-
-func walkFolder(folder Folder, fn func(Folder) bool) {
-	if fn(folder) {
-		return
-	}
-	for _, f := range folder.Folders() {
-		stop := fn(f)
-		if stop {
-			break
-		}
-		walkFolder(f, fn)
-	}
-}
-
-func (m *manuscript) ResolveFolder(path string) (result Folder, err error) {
-
-	for _, folder := range m.Folders() {
-		walkFolder(folder, func(f Folder) bool {
-			if f.Path() == path {
-				result = f
-				return true
-			} else {
-				return false
-			}
-		})
-	}
-
-	if result == nil {
-		err = oerr.FolderPathNotFound(path)
-		return
-	}
-
-	return
-}
-
-func (m *manuscript) ResolveScene(path string) (result Scene, err error) {
-	sceneContainer, err := m.ResolveFolder(filepath.Dir(path))
-	if err != nil {
-		return
-	}
-
-	// search the container for a matching scene
-	for _, scene := range sceneContainer.Scenes() {
-		if scene.Path() == path {
-			result = scene
-			break
-		}
-	}
-
-	if result == nil {
-		err = oerr.ScenePathNotFound(path)
-		return
-	}
 
 	return
 }

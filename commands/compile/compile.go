@@ -4,11 +4,11 @@ import (
 	"bufio"
 	_ "embed"
 	"fmt"
-	"gwcoffey/otis/files"
 	ms2 "gwcoffey/otis/ms"
 	"gwcoffey/otis/ms/compile/html"
 	"gwcoffey/otis/ms/compile/rtf"
 	"gwcoffey/otis/ms/compile/tex"
+	"gwcoffey/otis/msfs"
 	"gwcoffey/otis/text"
 	"os"
 	"os/exec"
@@ -26,7 +26,7 @@ type Args struct {
 }
 
 func generateTex(fileName string, manuscript ms2.Manuscript) (err error) {
-	outDir, err := files.DistDir(manuscript)
+	outDir, err := msfs.DistDir(manuscript.Path())
 	if err != nil {
 		return
 	}
@@ -41,12 +41,12 @@ func generateTex(fileName string, manuscript ms2.Manuscript) (err error) {
 }
 
 func generatePdf(fileName string, manuscript ms2.Manuscript) (err error) {
-	tmpDir, err := files.TmpDir(manuscript)
+	tmpDir, err := msfs.TmpDir(manuscript.Path())
 	if err != nil {
 		return
 	}
 
-	distDir, err := files.DistDir(manuscript)
+	distDir, err := msfs.DistDir(manuscript.Path())
 	if err != nil {
 		return
 	}
@@ -84,7 +84,7 @@ func generatePdf(fileName string, manuscript ms2.Manuscript) (err error) {
 }
 
 func generateHtml(fileName string, manuscript ms2.Manuscript) (err error) {
-	outDir, err := files.DistDir(manuscript)
+	outDir, err := msfs.DistDir(manuscript.Path())
 	if err != nil {
 		return
 	}
@@ -121,7 +121,7 @@ func generateHtml(fileName string, manuscript ms2.Manuscript) (err error) {
 }
 
 func generateRtf(fileName string, manuscript ms2.Manuscript) (err error) {
-	outDir, err := files.DistDir(manuscript)
+	outDir, err := msfs.DistDir(manuscript.Path())
 	if err != nil {
 		return
 	}
@@ -158,7 +158,7 @@ func generateRtf(fileName string, manuscript ms2.Manuscript) (err error) {
 }
 
 func execPdfLatex(texPath string, manuscript ms2.Manuscript) (err error) {
-	tmpDir, err := files.TmpDir(manuscript)
+	tmpDir, err := msfs.TmpDir(manuscript.Path())
 	if err != nil {
 		return
 	}
