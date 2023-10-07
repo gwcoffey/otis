@@ -4,7 +4,6 @@ import (
 	"gwcoffey/otis/commands/work"
 	"gwcoffey/otis/ms"
 	"gwcoffey/otis/msfs"
-	"os"
 	"path/filepath"
 )
 
@@ -19,30 +18,8 @@ func targetSceneNumber(args *Args) (num int, err error) {
 	if args.At != nil {
 		num = *args.At
 	} else {
-		num, err = msfs.NextSceneNumber(args.Path)
+		num, err = msfs.NextIndex(args.Path)
 	}
-	return
-}
-
-func makeRenameWorkList(path string, sceneNumber int) (workList work.List, err error) {
-	entries, err := os.ReadDir(path)
-	if err != nil {
-		return
-	}
-
-	workList = work.List{}
-
-	for _, entry := range entries {
-		var n int
-		n, err = msfs.FileNumber(entry.Name())
-		if err != nil {
-			return
-		}
-		if n >= sceneNumber {
-			workList = work.AppendRename(workList, filepath.Join(path, entry.Name()), msfs.RenumberFilename(entry.Name(), n+1))
-		}
-	}
-
 	return
 }
 
@@ -59,8 +36,8 @@ func Touch(args *Args) {
 	}
 
 	// make a work list for this add
-	workList, err := makeRenameWorkList(args.Path, sceneNumber)
-	workList = work.AppendAdd(workList, filepath.Join(args.Path, msfs.MakeFilename(args.Name, sceneNumber)))
+	workList, err := msfs.MakeRoom(args.Path, sceneNumber)
+	workList = work.AddFile(workList, filepath.Join(args.Path, msfs.MakeFilename(args.Name, sceneNumber)))
 
 	err = work.Execute(workList, args.Force)
 	if err != nil {

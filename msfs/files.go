@@ -86,3 +86,7 @@ func RenumberFilename(name string, newNum int) string {
 func MakeFilename(name string, num int) string {
 	return fmt.Sprintf("%02d-%s.md", num, text.ToKebab(name))
 }
+
+func MakeDirname(name string, num int) string {
+	return fmt.Sprintf("%02d-%s", num, text.ToKebab(name))
+}

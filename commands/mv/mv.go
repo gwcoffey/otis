@@ -18,7 +18,7 @@ type Args struct {
 }
 
 func appendMoveToEndOfDir(workList work.List, scene string, dir string) (work.List, error) {
-	lastSceneNumber, err := msfs.LastSceneNumber(dir)
+	lastSceneNumber, err := msfs.LastIndex(dir)
 	if err != nil {
 		return nil, err
 	}
@@ -103,7 +103,7 @@ func appendMoveInSameDir(workList work.List, manuscript ms.Manuscript, scene str
 		originalSceneNumber = math.MaxInt
 	}
 
-	lastScene, err := msfs.LastSceneNumber(filepath.Dir(scene))
+	lastScene, err := msfs.LastIndex(filepath.Dir(scene))
 	if err != nil {
 		return nil, err
 	}

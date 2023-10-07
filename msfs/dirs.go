@@ -1,6 +1,7 @@
 package msfs
 
 import (
+	"gwcoffey/otis/commands/work"
 	"os"
 	"path/filepath"
 )
@@ -23,7 +24,7 @@ func DistDir(msPath string) (path string, err error) {
 	return
 }
 
-func LastSceneNumber(dir string) (int, error) {
+func LastIndex(dir string) (int, error) {
 	entries, err := os.ReadDir(dir)
 	if err != nil {
 		return 0, err
@@ -46,7 +47,31 @@ func LastSceneNumber(dir string) (int, error) {
 	return num, nil
 }
 
-func NextSceneNumber(dir string) (int, error) {
-	num, err := LastSceneNumber(dir)
+func NextIndex(dir string) (int, error) {
+	num, err := LastIndex(dir)
 	return num + 1, err
+}
+
+// MakeRoom makes room in the given directory for a new item with the given index by moving
+// existing items with later indices up one spot
+func MakeRoom(path string, index int) (workList work.List, err error) {
+	entries, err := os.ReadDir(path)
+	if err != nil {
+		return
+	}
+
+	workList = work.List{}
+
+	for _, entry := range entries {
+		var n int
+		n, err = FileNumber(entry.Name())
+		if err != nil {
+			return
+		}
+		if n >= index {
+			workList = work.AppendRename(workList, filepath.Join(path, entry.Name()), RenumberFilename(entry.Name(), n+1))
+		}
+	}
+
+	return
 }

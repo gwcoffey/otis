@@ -13,7 +13,8 @@ type action int
 
 const (
 	rename action = iota
-	add
+	addFile
+	addDir
 	move
 )
 
@@ -28,18 +29,19 @@ type List []Work
 var manuscriptPrefixRegex = regexp.MustCompile("^manuscript/")
 
 func AppendRename(list List, path string, newName string) List {
-	newList := append(list, Work{action: rename, path: path, arg: newName})
-	return newList
+	return append(list, Work{action: rename, path: path, arg: newName})
 }
 
-func AppendAdd(list List, path string) List {
-	newList := append(list, Work{action: add, path: path})
-	return newList
+func AddFile(list List, path string) List {
+	return append(list, Work{action: addFile, path: path})
+}
+
+func AddDir(list List, path string) List {
+	return append(list, Work{action: addDir, path: path})
 }
 
 func AppendMove(list List, from string, to string) List {
-	newList := append(list, Work{action: move, path: from, arg: to})
-	return newList
+	return append(list, Work{action: move, path: from, arg: to})
 }
 
 func PrintableString(items List) string {
@@ -52,7 +54,7 @@ func PrintableString(items List) string {
 			builder.WriteString(manuscriptPrefixRegex.ReplaceAllString(w.path, ""))
 			builder.WriteString(" → ")
 			builder.WriteString(w.arg)
-		case add:
+		case addFile, addDir:
 			builder.WriteString("   ADD ")
 			builder.WriteString(manuscriptPrefixRegex.ReplaceAllString(w.path, ""))
 		case move:
@@ -82,13 +84,18 @@ func Execute(items List, force bool) (err error) {
 				if err != nil {
 					return
 				}
-			case add:
+			case addFile:
 				var file *os.File
 				file, err = os.OpenFile(workItem.path, os.O_CREATE|os.O_EXCL, 0666)
 				if err != nil {
 					return
 				}
 				err = file.Close()
+				if err != nil {
+					return
+				}
+			case addDir:
+				err = os.Mkdir(workItem.path, 0777)
 				if err != nil {
 					return
 				}

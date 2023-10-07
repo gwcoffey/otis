@@ -5,6 +5,7 @@ import (
 	"github.com/alexflint/go-arg"
 	"gwcoffey/otis/commands/compile"
 	"gwcoffey/otis/commands/initcmd"
+	"gwcoffey/otis/commands/mkdir"
 	"gwcoffey/otis/commands/mv"
 	"gwcoffey/otis/commands/touch"
 	"gwcoffey/otis/commands/wordcount"
@@ -13,6 +14,7 @@ import (
 var args struct {
 	Init      *initcmd.Args   `arg:"subcommand:init" help:"initialize a new otis project"`
 	Touch     *touch.Args     `arg:"subcommand:touch" help:"add a new scene"`
+	MkDir     *mkdir.Args     `arg:"subcommand:mkdir" help:"add a new folder"`
 	Move      *mv.Args        `arg:"subcommand:mv" help:"move a scene or folder"`
 	WordCount *wordcount.Args `arg:"subcommand:wc" help:"count words in your manuscript"`
 	Compile   *compile.Args   `arg:"subcommand:compile" help:"compile the manuscript for submission"`
@@ -33,6 +35,8 @@ func main() {
 		compile.Compile(args.Compile)
 	case args.Touch != nil:
 		touch.Touch(args.Touch)
+	case args.MkDir != nil:
+		mkdir.MkDir(args.MkDir)
 	case args.Move != nil:
 		mv.Mv(args.Move)
 	default:
