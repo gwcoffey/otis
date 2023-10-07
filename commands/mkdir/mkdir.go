@@ -1,9 +1,9 @@
 package mkdir
 
 import (
-	"gwcoffey/otis/commands/work"
 	"gwcoffey/otis/ms"
 	"gwcoffey/otis/msfs"
+	"gwcoffey/otis/work"
 	"path/filepath"
 )
 
@@ -14,10 +14,10 @@ type Args struct {
 	Force bool   `arg:"--force,-f" help:"move other files around without confirmation"`
 }
 
-func MkDir(args *Args) {
-	_, err := ms.LoadContaining(args.Path)
+func MkDir(args *Args) (err error) {
+	_, err = ms.LoadContaining(args.Path)
 	if err != nil {
-		panic(err)
+		return
 	}
 
 	// if no --at is provided, go to the end of the list
@@ -27,7 +27,7 @@ func MkDir(args *Args) {
 	} else {
 		index, err = msfs.NextIndex(args.Path)
 		if err != nil {
-			panic(err)
+			return
 		}
 	}
 
@@ -37,6 +37,8 @@ func MkDir(args *Args) {
 
 	err = work.Execute(workList, args.Force)
 	if err != nil {
-		panic(err)
+		return
 	}
+
+	return nil
 }

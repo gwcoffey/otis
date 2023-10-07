@@ -202,9 +202,8 @@ func writeTex(path string, manuscript ms2.Manuscript) (err error) {
 	return
 }
 
-func Compile(args *Args) {
+func Compile(args *Args) (err error) {
 	var manuscript ms2.Manuscript
-	var err error
 
 	if &args.ProjectPath == nil {
 		manuscript, err = ms2.LoadHere()
@@ -212,7 +211,7 @@ func Compile(args *Args) {
 		manuscript, err = ms2.Load(*args.ProjectPath)
 	}
 	if err != nil {
-		panic(err)
+		return
 	}
 
 	var fileName string
@@ -233,6 +232,8 @@ func Compile(args *Args) {
 		err = generateTex(fileName, manuscript)
 	}
 	if err != nil {
-		panic(err)
+		return
 	}
+
+	return nil
 }

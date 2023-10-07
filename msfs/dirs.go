@@ -1,7 +1,7 @@
 package msfs
 
 import (
-	"gwcoffey/otis/commands/work"
+	"gwcoffey/otis/work"
 	"os"
 	"path/filepath"
 )

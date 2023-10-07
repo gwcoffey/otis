@@ -157,9 +157,8 @@ func printLine(label string, count int, emphasize bool) {
 	}
 }
 
-func WordCount(args *Args) {
+func WordCount(args *Args) (err error) {
 	var manuscript ms2.Manuscript
-	var err error
 
 	if args.ProjectPath == nil {
 		manuscript, err = ms2.LoadHere()
@@ -167,7 +166,7 @@ func WordCount(args *Args) {
 		manuscript, err = ms2.Load(*args.ProjectPath)
 	}
 	if err != nil {
-		panic(err)
+		return
 	}
 
 	by := byFolder
@@ -177,6 +176,8 @@ func WordCount(args *Args) {
 
 	err = printManuscript(manuscript, by)
 	if err != nil {
-		panic(err)
+		return
 	}
+
+	return nil
 }

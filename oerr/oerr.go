@@ -14,6 +14,7 @@ type OtisError struct {
 
 const (
 	projectNotFound ErrorCode = iota + 1
+	alreadyAProject
 	pathOrAtRequired
 )
 
@@ -27,6 +28,10 @@ func IsProjectNotFoundErr(err error) bool {
 		return otisError.Code == projectNotFound
 	}
 	return false
+}
+
+func AlreadyAProject(path string) *OtisError {
+	return &OtisError{Code: alreadyAProject, Message: fmt.Sprintf("you are already in an otis project at %s", path)}
 }
 
 func PathOrAtRequired() *OtisError {

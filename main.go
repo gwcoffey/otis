@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"github.com/alexflint/go-arg"
 	"gwcoffey/otis/commands/compile"
@@ -9,6 +10,8 @@ import (
 	"gwcoffey/otis/commands/mv"
 	"gwcoffey/otis/commands/touch"
 	"gwcoffey/otis/commands/wordcount"
+	"gwcoffey/otis/oerr"
+	"os"
 )
 
 var args struct {
@@ -20,26 +23,45 @@ var args struct {
 	Compile   *compile.Args   `arg:"subcommand:compile" help:"compile the manuscript for submission"`
 }
 
+func reportErrorAndExit(err error) {
+	_, perr := fmt.Fprintf(os.Stderr, "otis: (error) %s\n", err.Error())
+	if perr != nil {
+		panic(perr)
+	}
+
+	var otisErr *oerr.OtisError
+	ok := errors.As(err, &otisErr)
+	if ok {
+		os.Exit(int(otisErr.Code))
+	} else {
+		os.Exit(-1)
+	}
+}
+
 func main() {
 	p := arg.MustParse(&args)
 	if p.Subcommand() == nil {
 		p.Fail("missing subcommand")
 	}
 
+	var err error
+
 	switch {
 	case args.Init != nil:
-		initcmd.Init(args.Init)
+		err = initcmd.Init(args.Init)
 	case args.WordCount != nil:
-		wordcount.WordCount(args.WordCount)
+		err = wordcount.WordCount(args.WordCount)
 	case args.Compile != nil:
-		compile.Compile(args.Compile)
+		err = compile.Compile(args.Compile)
 	case args.Touch != nil:
-		touch.Touch(args.Touch)
+		err = touch.Touch(args.Touch)
 	case args.MkDir != nil:
-		mkdir.MkDir(args.MkDir)
+		err = mkdir.MkDir(args.MkDir)
 	case args.Move != nil:
-		mv.Mv(args.Move)
-	default:
-		panic(fmt.Sprintf("unexpected and unhandled command"))
+		err = mv.Mv(args.Move)
+	}
+
+	if err != nil {
+		reportErrorAndExit(err)
 	}
 }

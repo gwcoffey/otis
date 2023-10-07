@@ -1,10 +1,10 @@
 package mv
 
 import (
-	"gwcoffey/otis/commands/work"
 	"gwcoffey/otis/ms"
 	"gwcoffey/otis/msfs"
 	"gwcoffey/otis/oerr"
+	"gwcoffey/otis/work"
 	"math"
 	"os"
 	"path/filepath"
@@ -149,10 +149,10 @@ func appendMoveInSameDir(workList work.List, manuscript ms.Manuscript, scene str
 	return workList, nil
 }
 
-func Mv(args *Args) {
+func Mv(args *Args) (err error) {
 	manuscript, err := ms.LoadContaining(args.Path)
 	if err != nil {
-		panic(err)
+		return
 	}
 
 	workList := work.List{}
@@ -165,15 +165,17 @@ func Mv(args *Args) {
 	} else if args.At != nil {
 		workList, err = appendMoveInSameDir(workList, manuscript, args.Path, *args.At)
 	} else {
-		panic(oerr.PathOrAtRequired())
+		return oerr.PathOrAtRequired()
 	}
 
 	if err != nil {
-		panic(err)
+		return
 	}
 
 	err = work.Execute(workList, args.Force)
 	if err != nil {
-		panic(err)
+		return
 	}
+
+	return nil
 }

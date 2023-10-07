@@ -1,9 +1,9 @@
 package touch
 
 import (
-	"gwcoffey/otis/commands/work"
 	"gwcoffey/otis/ms"
 	"gwcoffey/otis/msfs"
+	"gwcoffey/otis/work"
 	"path/filepath"
 )
 
@@ -23,16 +23,16 @@ func targetSceneNumber(args *Args) (num int, err error) {
 	return
 }
 
-func Touch(args *Args) {
-	_, err := ms.LoadContaining(args.Path)
+func Touch(args *Args) (err error) {
+	_, err = ms.LoadContaining(args.Path)
 	if err != nil {
-		panic(err)
+		return
 	}
 
 	// target either the end of the scene list or the provided scene number
 	sceneNumber, err := targetSceneNumber(args)
 	if err != nil {
-		panic(err)
+		return
 	}
 
 	// make a work list for this add
@@ -41,6 +41,8 @@ func Touch(args *Args) {
 
 	err = work.Execute(workList, args.Force)
 	if err != nil {
-		panic(err)
+		return
 	}
+
+	return nil
 }

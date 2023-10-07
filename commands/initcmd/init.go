@@ -2,7 +2,6 @@ package initcmd
 
 import (
 	_ "embed"
-	"fmt"
 	ms2 "gwcoffey/otis/ms"
 	"gwcoffey/otis/oerr"
 	"os"
@@ -23,9 +22,8 @@ var otisTemplate []byte
 //go:embed template/00-scene.md
 var sceneTemplate []byte
 
-func Init(args *Args) {
+func Init(args *Args) (err error) {
 	var existing ms2.Manuscript
-	var err error
 
 	if args.ProjectPath == nil {
 		existing, err = ms2.LoadHere()
@@ -33,25 +31,27 @@ func Init(args *Args) {
 		existing, err = ms2.Load(*args.ProjectPath)
 	}
 	if err != nil && !oerr.IsProjectNotFoundErr(err) {
-		panic(err)
+		return
 	}
 
 	if err == nil {
-		panic(fmt.Sprintf("you are already in an otis project at %s", existing.Path()))
+		return oerr.AlreadyAProject(existing.Path())
 	}
 
 	err = os.WriteFile("otis.yml", otisTemplate, filePerms)
 	if err != nil {
-		panic(err)
+		return
 	}
 
 	err = os.Mkdir("manuscript", directoryPerms)
 	if err != nil {
-		panic(err)
+		return
 	}
 
 	err = os.WriteFile("manuscript/00-scene.md", sceneTemplate, filePerms)
 	if err != nil {
-		panic(err)
+		return
 	}
+
+	return nil
 }
