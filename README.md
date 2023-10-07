@@ -169,51 +169,83 @@ $ otis init
 
 This will create the necessary configuration for a manuscript with one scene. You can edit the metadata files as needed, and add scenes.
 
-### Working with Scenes
+### Creating Scenes
+
+You can add new scenes with the `touch` command:
 
 ```shell
-# add a scene to the end
-$ otis touch PATH NAME
-
-# add a scene inserted
-$ otis touch PATH NAME --at NEW_INDEX
-
-# move a scene in the same folder
-$ otis mv PATH --at NEW_INDEX
-
-# move a scene to another folder
-$ otis mv PATH PATH
-
-# move a scene to another folder and insert
-$ otis mv PATH PATH --at NEW_INDEX
-
-# split a scene (insert "###" in scene file first)
-$ otis split PATH
-
-# combine multiple scenes into one
-$ otis join PATH PATH...
-
-# normalize all scene/folder numbers
-$ otis normalize [--recursive] PATH
-
-# insert a chapter
-$ otis chapter PATH
-
-# show outline
-$ otis ls
-
-# show table of contents
-$ otis ls --chapter
+$ otis touch manuscript/ "my new scene"
+$
 ```
- 
 
-### Working with Folders
+This will add a new file at the root of the manuscript with a name like `00-my-new-scene.md`. The scene will, by default, be placed at the end of the target folder. In other words, the index number will be the largest current index number plus one.
 
-TODO
+You can specify an index at which to insert the scene instead:
 
-### Working with Chapters
+```shell
+$ otis touch --at 3 manuscript/ "my new scene"
 
-TODO
+About to change:
+
+  RENAME 03-an-existing-scene.md → 04-an-existing-scene.md
+  RENAME 04-another-scene.md → 05-another-scene.md
+     ADD 03-my-new-scene.md
+
+OK to proceed? [Y/n]: 
+```
+> Note: As shown above, any time otis will make more than one change to the manuscript to accommodate
+> a command, it will first show the list of changes it is about to make and prompt you for
+> confirmation. You can use the `--force` switch to bypass this prompt if you prefer. 
+
+This time, the scene index will be `03` and any existing scenes will be adjusted forward as necessary.
+
+### Creating Folders
+
+You can add new folders with the `mkdir` command:
+
+```shell
+$ otis mkdir manuscript/ "my new folder"
+$  
+```
+
+This will create a new folder in the target directory named something like `00-my-new-folder`. Again, Otis will number the folder so it is added to the *end* of the target. And again you can use `--at` to insert it somewhere else:
+
+```shell
+$ otis mkdir --at 0 manuscript/ "my new folder"
+About to change:
+
+  RENAME 00-my-first-scene.md → 01-my-first-scene.md
+  RENAME 01-my-second-scene.md → 02-my-second-scene.md
+     ADD 00-my-new-folder
+
+OK to proceed? [Y/n]: 
+```
+
+### Moving Scenes and Folders
+
+You can move scenes and folders using the `mv` command. You can use `mv` to **renumber** something:
+
+```shell
+$ otis mv --at 5 manuscript/04-my-scene.md
+```
+
+This will rename the specified scene or folder with the new index number, and rename any other scenes/folders as necessary to make room. Since scene names minus the index may not be unique, this sometimes requires moving a file to a temporary location, making space, and moving it back. Again, Otis will show you everything it is going to do before it does it.
+
+You can also move a scene to another folder:
+
+```shell
+$ otis mv manuscript/00-act-1/00-my-first-scene.md manuscript/01-act-2
+```
+
+This will move the scene out of its current folder (renumbering things as needed) and add it to the *end* of the target folder.
+
+Finally you can combine `--at` with a target folder to control the final index of the scene:
+
+```shell
+$ otis mv --at 0 manuscript/00-act-1/00-my-first-scene.md manuscript/01-act-2 
+```
+
+> Note: `mv` works the same with both scenes and folders. 
 
 ### Counting Words
 
